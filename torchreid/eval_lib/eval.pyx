@@ -5,22 +5,22 @@ cimport numpy as np
 import numpy as np
 
 cpdef eval_market1501_wrap(distmat,
-        q_pids,
-        g_pids,
+        q_vids,
+        g_vids,
         q_camids,
         g_camids,
         max_rank):
     distmat = np.asarray(distmat,dtype=np.float32)
-    q_pids = np.asarray(q_pids, dtype=np.int64)
-    g_pids = np.asarray(g_pids , dtype=np.int64)
+    q_vids = np.asarray(q_vids, dtype=np.int64)
+    g_vids = np.asarray(g_vids , dtype=np.int64)
     q_camids=np.asarray(q_camids,dtype=np.int64)
     g_camids=np.asarray(g_camids, dtype=np.int64)
-    return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+    return eval_market1501(distmat, q_vids, g_vids, q_camids, g_camids, max_rank)
 
 cpdef eval_market1501(
         float[:,:] distmat,
-        long[:] q_pids,
-        long[:] g_pids,
+        long[:] q_vids,
+        long[:] g_vids,
         long[:] q_camids,
         long[:] g_camids,
         long max_rank,
@@ -35,11 +35,11 @@ cpdef eval_market1501(
 
     cdef:
         long[:,:] indices = np.argsort(distmat, axis=1)
-        long[:,:] matches = (np.asarray(g_pids)[np.asarray(indices)] == np.asarray(q_pids)[:, np.newaxis]).astype(np.int64)
+        long[:,:] matches = (np.asarray(g_vids)[np.asarray(indices)] == np.asarray(q_vids)[:, np.newaxis]).astype(np.int64)
         float[:,:] all_cmc = np.zeros((num_q,max_rank),dtype=np.float32)
         float[:] all_AP = np.zeros(num_q,dtype=np.float32)
 
-        long q_pid, q_camid
+        long q_vid, q_camid
         long[:] order=np.zeros(num_g,dtype=np.int64), keep =np.zeros(num_g,dtype=np.int64)
 
         long num_valid_q = 0, q_idx, idx
@@ -53,13 +53,13 @@ cpdef eval_market1501(
         unsigned int orig_cmc_flag=0
 
     for q_idx in range(num_q):
-        # get query pid and camid
-        q_pid = q_pids[q_idx]
+        # get query vid and camid
+        q_vid = q_vids[q_idx]
         q_camid = q_camids[q_idx]
-        # remove gallery samples that have the same pid and camid with query
+        # remove gallery samples that have the same vid and camid with query
         order = indices[q_idx]
         for idx in range(num_g):
-            keep[idx] = ( g_pids[order[idx]] !=q_pid) or (g_camids[order[idx]]!=q_camid )
+            keep[idx] = ( g_vids[order[idx]] !=q_vid) or (g_camids[order[idx]]!=q_camid )
         # compute cmc curve
         num_orig_cmc=0
         orig_cmc_flag=0

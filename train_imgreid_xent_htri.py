@@ -25,7 +25,7 @@ from torchreid.utils.avgmeter import AverageMeter
 from torchreid.utils.logger import Logger
 from torchreid.utils.torchtools import count_num_param
 from torchreid.utils.reidtools import visualize_ranked_results
-from torchreid.eval_metrics import evaluate
+from torchreid.eval_metrics import evaluate_aicity
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
 
@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(description='Train image model with cross entro
 # Datasets
 parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
-parser.add_argument('-d', '--dataset', type=str, default='market1501',
+parser.add_argument('-d', '--dataset', type=str, default='aicity666',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -105,6 +105,8 @@ parser.add_argument('--gpu-devices', default='0', type=str,
                     help='gpu device ids for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--vis-ranked-res', action='store_true',
                     help="visualize ranked results, only available in evaluation mode (default: False)")
+# AiCity setting
+parser.add_argument('--exp',type=str,default='exp0',help='aicity txt result name')
 
 args = parser.parse_args()
 
@@ -169,11 +171,11 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes=dataset.num_train_pids, loss={'xent', 'htri'})
+    model = models.init_model(name=args.arch, num_classes=dataset.num_train_vids, loss={'xent', 'htri'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
-        criterion_xent = CrossEntropyLabelSmooth(num_classes=dataset.num_train_pids, use_gpu=use_gpu)
+        criterion_xent = CrossEntropyLabelSmooth(num_classes=dataset.num_train_vids, use_gpu=use_gpu)
     else:
         criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
@@ -229,13 +231,14 @@ def main():
         scheduler.step()
         
         if (epoch + 1) > args.start_eval and args.eval_step > 0 and (epoch + 1) % args.eval_step == 0 or (epoch + 1) == args.max_epoch:
-            print("==> Test")
-            rank1 = test(model, queryloader, galleryloader, use_gpu)
-            is_best = rank1 > best_rank1
+            # print("==> Test")
+            # rank1 = test(model, queryloader, galleryloader, use_gpu)
+            # is_best = rank1 > best_rank1
             
-            if is_best:
-                best_rank1 = rank1
-                best_epoch = epoch + 1
+            # if is_best:
+            #     best_rank1 = rank1
+            #     best_epoch = epoch + 1
+            is_best = True
 
             if use_gpu:
                 state_dict = model.module.state_dict()
@@ -244,11 +247,10 @@ def main():
             
             save_checkpoint({
                 'state_dict': state_dict,
-                'rank1': rank1,
                 'epoch': epoch,
             }, is_best, osp.join(args.save_dir, 'checkpoint_ep' + str(epoch + 1) + '.pth.tar'))
 
-    print("==> Best Rank-1 {:.1%}, achieved at epoch {}".format(best_rank1, best_epoch))
+    # print("==> Best Rank-1 {:.1%}, achieved at epoch {}".format(best_rank1, best_epoch))
 
     elapsed = round(time.time() - start_time)
     elapsed = str(datetime.timedelta(seconds=elapsed))
@@ -260,32 +262,34 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
     losses = AverageMeter()
     batch_time = AverageMeter()
     data_time = AverageMeter()
+    xent_losses = AverageMeter()
+    htri_losses = AverageMeter()
 
     model.train()
 
     end = time.time()
-    for batch_idx, (imgs, pids, _) in enumerate(trainloader):
+    for batch_idx, (imgs, vids, _) in enumerate(trainloader):
         data_time.update(time.time() - end)
         
         if use_gpu:
-            imgs, pids = imgs.cuda(), pids.cuda()
+            imgs, vids = imgs.cuda(), vids.cuda()
         
         outputs, features = model(imgs)
         if args.htri_only:
             if isinstance(features, tuple):
-                loss = DeepSupervision(criterion_htri, features, pids)
+                loss = DeepSupervision(criterion_htri, features, vids)
             else:
-                loss = criterion_htri(features, pids)
+                loss = criterion_htri(features, vids)
         else:
             if isinstance(outputs, tuple):
-                xent_loss = DeepSupervision(criterion_xent, outputs, pids)
+                xent_loss = DeepSupervision(criterion_xent, outputs, vids)
             else:
-                xent_loss = criterion_xent(outputs, pids)
+                xent_loss = criterion_xent(outputs, vids)
             
             if isinstance(features, tuple):
-                htri_loss = DeepSupervision(criterion_htri, features, pids)
+                htri_loss = DeepSupervision(criterion_htri, features, vids)
             else:
-                htri_loss = criterion_htri(features, pids)
+                htri_loss = criterion_htri(features, vids)
             
             loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
         optimizer.zero_grad()
@@ -294,15 +298,19 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
 
         batch_time.update(time.time() - end)
 
-        losses.update(loss.item(), pids.size(0))
+        losses.update(loss.item(), vids.size(0))
+        xent_losses(xent_loss.item(),vids.size(0))
+        htri_losses(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
+                  'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses))
+                   data_time=data_time, loss=losses, xent_loss=xent_losses, htri_loss=htri_losses))
         
         end = time.time()
 
@@ -313,8 +321,8 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
     model.eval()
 
     with torch.no_grad():
-        qf, q_pids, q_camids = [], [], []
-        for batch_idx, (imgs, pids, camids) in enumerate(queryloader):
+        qf, q_vids, q_camids = [], [], []
+        for batch_idx, (imgs, vids, camids) in enumerate(queryloader):
             if use_gpu:
                 imgs = imgs.cuda()
 
@@ -324,16 +332,16 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
 
             features = features.data.cpu()
             qf.append(features)
-            q_pids.extend(pids)
+            q_vids.extend(vids)
             q_camids.extend(camids)
         qf = torch.cat(qf, 0)
-        q_pids = np.asarray(q_pids)
+        q_vids = np.asarray(q_vids)
         q_camids = np.asarray(q_camids)
 
         print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
 
-        gf, g_pids, g_camids = [], [], []
-        for batch_idx, (imgs, pids, camids) in enumerate(galleryloader):
+        gf, g_vids, g_camids = [], [], []
+        for batch_idx, (imgs, vids, camids) in enumerate(galleryloader):
             if use_gpu:
                 imgs = imgs.cuda()
             
@@ -343,10 +351,10 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
 
             features = features.data.cpu()
             gf.append(features)
-            g_pids.extend(pids)
+            g_vids.extend(vids)
             g_camids.extend(camids)
         gf = torch.cat(gf, 0)
-        g_pids = np.asarray(g_pids)
+        g_vids = np.asarray(g_vids)
         g_camids = np.asarray(g_camids)
 
         print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
@@ -360,7 +368,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
     distmat = distmat.numpy()
 
     print("Computing CMC and mAP")
-    cmc, mAP = evaluate(distmat, q_pids, g_pids, q_camids, g_camids, use_metric_cuhk03=args.use_metric_cuhk03)
+    cmc, mAP = evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
 
     print("Results ----------")
     print("mAP: {:.1%}".format(mAP))

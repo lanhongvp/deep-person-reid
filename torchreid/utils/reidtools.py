@@ -17,7 +17,7 @@ def visualize_ranked_results(distmat, dataset, save_dir='log/ranked_results', to
 
     Args:
     - distmat: distance matrix of shape (num_query, num_gallery).
-    - dataset: has dataset.query and dataset.gallery, both are lists of (img_path, pid, camid);
+    - dataset: has dataset.query and dataset.gallery, both are lists of (img_path, vid, camid);
                for imgreid, img_path is a string, while for vidreid, img_path is a tuple containing
                a sequence of strings.
     - save_dir: directory to save output images.
@@ -51,15 +51,15 @@ def visualize_ranked_results(distmat, dataset, save_dir='log/ranked_results', to
             shutil.copy(src, dst)
 
     for q_idx in range(num_q):
-        qimg_path, qpid, qcamid = dataset.query[q_idx]
+        qimg_path, qvid, qcamid = dataset.query[q_idx]
         qdir = osp.join(save_dir, 'query' + str(q_idx + 1).zfill(5))
         mkdir_if_missing(qdir)
         _cp_img_to(qimg_path, qdir, rank=0, prefix='query')
 
         rank_idx = 1
         for g_idx in indices[q_idx,:]:
-            gimg_path, gpid, gcamid = dataset.gallery[g_idx]
-            invalid = (qpid == gpid) & (qcamid == gcamid)
+            gimg_path, gvid, gcamid = dataset.gallery[g_idx]
+            invalid = (qvid == gvid) & (qcamid == gcamid)
             if not invalid:
                 _cp_img_to(gimg_path, qdir, rank=rank_idx, prefix='gallery')
                 rank_idx += 1

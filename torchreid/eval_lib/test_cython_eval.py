@@ -19,15 +19,15 @@ num_q = 100
 num_g = 1000
 
 distmat = np.random.rand(num_q, num_g) * 20
-q_pids = np.random.randint(0, num_q, size=num_q)
-g_pids = np.random.randint(0, num_g, size=num_g)
+q_vids = np.random.randint(0, num_q, size=num_q)
+g_vids = np.random.randint(0, num_g, size=num_g)
 q_camids = np.random.randint(0, 5, size=num_q)
 g_camids = np.random.randint(0, 5, size=num_g)
 
 end = time.time()
 cmc, mAP = eval_market1501_wrap(distmat,
-                                q_pids,
-                                g_pids,
+                                q_vids,
+                                g_vids,
                                 q_camids,
                                 g_camids, 10)
 elapsed_cython = time.time() - end
@@ -36,8 +36,8 @@ print("consume time {:.5f} \n mAP is {} \n cmc is {}".format(elapsed_cython, mAP
 
 end = time.time()
 cmc, mAP = eval_market1501(distmat,
-                           q_pids,
-                           g_pids,
+                           q_vids,
+                           g_vids,
                            q_camids,
                            g_camids, 10)
 elapsed_python = time.time() - end

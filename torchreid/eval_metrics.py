@@ -16,7 +16,7 @@ except ImportError:
     print("Warning: Cython evaluation is UNAVAILABLE")
 
 
-def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, N=100):
+def eval_cuhk03(distmat, q_vids, g_vids, q_camids, g_camids, max_rank, N=100):
     """Evaluation with cuhk03 metric
     Key: one image for each gallery identity is randomly sampled for each query identity.
     Random sampling is performed N times (default: N=100).
@@ -26,20 +26,20 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, N=100):
         max_rank = num_g
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
     indices = np.argsort(distmat, axis=1)
-    matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
+    matches = (g_vids[indices] == q_vids[:, np.newaxis]).astype(np.int32)
 
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
     num_valid_q = 0. # number of valid query
     for q_idx in range(num_q):
-        # get query pid and camid
-        q_pid = q_pids[q_idx]
+        # get query vid and camid
+        q_vid = q_vids[q_idx]
         q_camid = q_camids[q_idx]
 
-        # remove gallery samples that have the same pid and camid with query
+        # remove gallery samples that have the same vid and camid with query
         order = indices[q_idx]
-        remove = (g_pids[order] == q_pid) & (g_camids[order] == q_camid)
+        remove = (g_vids[order] == q_vid) & (g_camids[order] == q_camid)
         keep = np.invert(remove)
 
         # compute cmc curve
@@ -48,15 +48,15 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, N=100):
             # this condition is true when query identity does not appear in gallery
             continue
 
-        kept_g_pids = g_pids[order][keep]
-        g_pids_dict = defaultdict(list)
-        for idx, pid in enumerate(kept_g_pids):
-            g_pids_dict[pid].append(idx)
+        kept_g_vids = g_vids[order][keep]
+        g_vids_dict = defaultdict(list)
+        for idx, vid in enumerate(kept_g_vids):
+            g_vids_dict[vid].append(idx)
 
         cmc, AP = 0., 0.
         for repeat_idx in range(N):
             mask = np.zeros(len(orig_cmc), dtype=np.bool)
-            for _, idxs in g_pids_dict.items():
+            for _, idxs in g_vids_dict.items():
                 # randomly sample one image for each gallery person
                 rnd_idx = np.random.choice(idxs)
                 mask[rnd_idx] = True
@@ -85,7 +85,7 @@ def eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank, N=100):
     return all_cmc, mAP
 
 
-def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
+def eval_market1501(distmat, q_vids, g_vids, q_camids, g_camids, max_rank):
     """Evaluation with market1501 metric
     Key: for each query identity, its gallery images from the same camera view are discarded.
     """
@@ -94,20 +94,20 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         max_rank = num_g
         print("Note: number of gallery samples is quite small, got {}".format(num_g))
     indices = np.argsort(distmat, axis=1)
-    matches = (g_pids[indices] == q_pids[:, np.newaxis]).astype(np.int32)
+    matches = (g_vids[indices] == q_vids[:, np.newaxis]).astype(np.int32)
 
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
     num_valid_q = 0. # number of valid query
     for q_idx in range(num_q):
-        # get query pid and camid
-        q_pid = q_pids[q_idx]
+        # get query vid and camid
+        q_vid = q_vids[q_idx]
         q_camid = q_camids[q_idx]
 
-        # remove gallery samples that have the same pid and camid with query
+        # remove gallery samples that have the same vid and camid with query
         order = indices[q_idx]
-        remove = (g_pids[order] == q_pid) & (g_camids[order] == q_camid)
+        remove = (g_vids[order] == q_vid) & (g_camids[order] == q_camid)
         keep = np.invert(remove)
 
         # compute cmc curve
@@ -139,12 +139,46 @@ def eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
     return all_cmc, mAP
 
+def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0'):
+    q_num = distmat.shape[0]
+    g_num = distmat.shape[1]
+    aicity_results = {}
 
-def evaluate(distmat, q_pids, g_pids, q_camids, g_camids, max_rank=50, use_metric_cuhk03=False, use_cython=True):
+    for idx,q_id in enumerate(q_ids):
+        distmat_cmp = np.argsort(distmat[idx,:])
+        distmat_rank = distmat_cmp[:max_rank]
+        distmat_rank = g_ids[distmat_rank]
+        aicity_results[q_id] = distmat_rank
+    
+    aicity_results = pd.DataFrame(list(aicity_results.items()),columns=['query_ids','gallery_ids'])
+    embed()
+    aicity_results = aicity_results.sort_values('query_ids')
+    _write2txt(aicity_results,exp)
+
+
+def _write2txt(aicity_results,exp):
+    with open(exp+'.txt','w') as f:
+        for idx in range(len(aicity_results)):
+            sep_c = ' '
+            row_ranks = []
+            idx_row = aicity_results.iloc[idx]['gallery_ids'][:100]
+            #embed()
+            for item in idx_row:
+                row_rank = str(item)
+                row_ranks.append(row_rank)
+            sep_c = sep_c.join(row_ranks)
+            #embed()
+            sep_c = sep_c+'\n'
+            #embed()
+            f.write(sep_c)
+        f.close()
+
+
+def evaluate(distmat, q_vids, g_vids, q_camids, g_camids, max_rank=50, use_metric_cuhk03=False, use_cython=True):
     if use_metric_cuhk03:
-        return eval_cuhk03(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+        return eval_cuhk03(distmat, q_vids, g_vids, q_camids, g_camids, max_rank)
     else:
         if use_cython and CYTHON_EVAL_AVAI:
-            return eval_market1501_wrap(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+            return eval_market1501_wrap(distmat, q_vids, g_vids, q_camids, g_camids, max_rank)
         else:
-            return eval_market1501(distmat, q_pids, g_pids, q_camids, g_camids, max_rank)
+            return eval_market1501(distmat, q_vids, g_vids, q_camids, g_camids, max_rank)

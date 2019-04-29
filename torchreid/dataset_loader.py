@@ -38,13 +38,13 @@ class ImageDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, index):
-        img_path, pid, camid = self.dataset[index]
+        img_path, vid, camid = self.dataset[index]
         img = read_image(img_path)
         
         if self.transform is not None:
             img = self.transform(img)
         
-        return img, pid, camid
+        return img, vid, camid
 
 
 class VideoDataset(Dataset):
@@ -63,7 +63,7 @@ class VideoDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, index):
-        img_paths, pid, camid = self.dataset[index]
+        img_paths, vid, camid = self.dataset[index]
         num = len(img_paths)
 
         if self.sample == 'random':
@@ -109,4 +109,4 @@ class VideoDataset(Dataset):
             imgs.append(img)
         imgs = torch.cat(imgs, dim=0)
 
-        return imgs, pid, camid
+        return imgs, vid, camid
