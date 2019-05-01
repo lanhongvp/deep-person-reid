@@ -344,7 +344,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         if args.use_track_info:
             for q_idx in range(len(dataset_q)):
                 # embed()
-                q_img = int(dataset_q[0][q_idx].split('/')[-1].strip('.jpg'))
+                q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
         for batch_idx, imgs in enumerate(queryloader):
@@ -369,7 +369,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
 
         if args.use_track_info:
             for g_idx in range(len(dataset_g)):
-                g_img = int(dataset_g[0][g_idx].split('/')[-1].strip('.jpg'))
+                g_img = int(dataset_g[g_idx].split('/')[-1].strip('.jpg'))
                 g_imgs.append(g_img)
 
         for batch_idx, imgs in enumerate(galleryloader):
