@@ -394,7 +394,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
     print("------------------------")
 
     if args.reranking:
-        from util.re_ranking import re_ranking
+        from torchreid.utils.re_ranking import re_ranking
         if args.test_distance == 'global':
             print("Only using global branch for reranking")
             distmat = re_ranking(qf,gt_f,k1=20, k2=6, lambda_value=0.3)

@@ -11,7 +11,7 @@ from IPython import embed
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn import preprocessing as pre
-from util.re_ranking import re_ranking
+from torchreid.utils.re_ranking import re_ranking
 
 def get_track_id(dataset_dir,is_train=False):
     gallery_track_name = 'test_track_id.txt'
