@@ -186,6 +186,7 @@ def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k
                 if cnt >= rank_k:
                     test_rank_result[q_id] = test_rank_tmp
                     continue
+    embed()
     test_rank_result_df = pd.DataFrame(list(test_rank_result.items()),columns=['query_ids','gallery_ids'])
     test_result_df = test_rank_result_df.sort_values('query_ids')
     _write2txt(test_result_df,exp)
