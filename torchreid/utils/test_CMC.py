@@ -32,7 +32,7 @@ def get_track_id(root_dir,is_train=False):
             gt_idx = 0  
             for gallery_track_id in gallery_track_f.readlines():
                 gallery_tid = gallery_track_id.split()
-                gt_ids[gt_idx] = map(lambda gt_id:int(gt_id),gallery_tid)
+                gt_ids[gt_idx] = list(map(lambda gt_id:int(gt_id),gallery_tid))
                 gt_idx += 1
         return gt_ids
 
