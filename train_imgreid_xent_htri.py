@@ -335,6 +335,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         qf, q_vids, q_camids = [], [], []
         if args.use_track_info:
             for q_idx in range(len(dataset_q)):
+                embed()
                 q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
