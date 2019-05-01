@@ -1,1 +1,1 @@
-python train_imgreid_xent_htri.py --root /home/lzhpc/home_lan/data -a densenet121 -d aicity_test --resume log_d121_mveri/checkpoint_ep60.pth.tar --evaluate --vis-ranked-res --reranking --use_track_info --use-cpu --exp d121_tri_mveri
+python train_imgreid_xent_htri.py --root /home/lzhpc/home_lan/data -a densenet121 --resume log_d121_mveri/checkpoint_ep60.pth.tar --evaluate --vis-ranked-res --reranking --use_track_info --exp d121_tri_mveri --gpu-devices 0

@@ -13,7 +13,10 @@ from scipy.spatial.distance import cdist
 from sklearn import preprocessing as pre
 from torchreid.utils.re_ranking import re_ranking
 
-def get_track_id(dataset_dir,is_train=False):
+def get_track_id(root_dir,is_train=False):
+    dataset = 'aiCity_s'
+    dataset_dir = osp.join(root_dir,dataset)
+    print('Track dataset dir',dataset_dir)
     gallery_track_name = 'test_track_id.txt'
     train_track_name = 'train_track_id.txt'
     gallery_track_dir = osp.join(dataset_dir,gallery_track_name)

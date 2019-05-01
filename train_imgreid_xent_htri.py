@@ -36,7 +36,9 @@ parser = argparse.ArgumentParser(description='Train image model with cross entro
 # Datasets
 parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
-parser.add_argument('-d', '--dataset', type=str, default='aicity666',
+parser.add_argument('-d', '--dataset', type=str, default='aicity_test',
+                    choices=data_manager.get_names())
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -140,7 +142,13 @@ def main():
         root=args.root, name=args.dataset, split_id=args.split_id,
         cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
     )
+    print("Dataset test {}".format(dataset))
+    dataset_m = data_manager.init_imgreid_dataset(
+        root=args.root, name=args.dataset_m, split_id=args.split_id,
+        cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
+    )
 
+    print("Dataset merge {}".format(dataset_m))
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
         T.RandomHorizontalFlip(),
@@ -157,7 +165,7 @@ def main():
     pin_memory = True if use_gpu else False
 
     trainloader = DataLoader(
-        ImageDataset(dataset.train, transform=transform_train),
+        ImageDataset(dataset_m.train, transform=transform_train),
         sampler=RandomIdentitySampler(dataset.train, args.train_batch, args.num_instances),
         batch_size=args.train_batch, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=True,
@@ -176,7 +184,7 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes=dataset.num_train_vids, loss={'xent', 'htri'})
+    model = models.init_model(name=args.arch, num_classes=dataset_m.num_train_vids, loss={'xent', 'htri'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
@@ -332,11 +340,11 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
     model.eval()
 
     with torch.no_grad():
-        qf, q_vids, q_camids = [], [], []
+        qf, q_vids, q_camids, q_imgs = [], [], [], []
         if args.use_track_info:
             for q_idx in range(len(dataset_q)):
-                embed()
-                q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
+                # embed()
+                q_img = int(dataset_q[0][q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
         for batch_idx, (imgs, vids, camids) in enumerate(queryloader):
@@ -357,11 +365,11 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
 
         print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
 
-        gf, g_vids, g_camids = [], [], []
+        gf, g_vids, g_camids, g_imgs = [], [], [], []
 
         if args.use_track_info:
             for g_idx in range(len(dataset_g)):
-                g_img = int(dataset_g[g_idx].split('/')[-1].strip('.jpg'))
+                g_img = int(dataset_g[0][g_idx].split('/')[-1].strip('.jpg'))
                 g_imgs.append(g_img)
 
         for batch_idx, (imgs, vids, camids) in enumerate(galleryloader):
