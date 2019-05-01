@@ -199,9 +199,9 @@ def main():
             checkpoint = torch.load(args.resume)
             model.load_state_dict(checkpoint['state_dict'])
             args.start_epoch = checkpoint['epoch']
-            rank1 = checkpoint['rank1']
+            # rank1 = checkpoint['rank1']
             print("Loaded checkpoint from '{}'".format(args.resume))
-            print("- start_epoch: {}\n- rank1: {}".format(args.start_epoch, rank1))
+            # print("- start_epoch: {}\n- rank1: {}".format(args.start_epoch, rank1))
 
     if use_gpu:
         model = nn.DataParallel(model).cuda()
@@ -299,8 +299,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         batch_time.update(time.time() - end)
 
         losses.update(loss.item(), vids.size(0))
-        xent_losses(xent_loss.item(),vids.size(0))
-        htri_losses(htri_loss.item(),vids.size(0))
+        xent_losses.update(xent_loss.item(),vids.size(0))
+        htri_losses.update(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -368,18 +368,18 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
     distmat = distmat.numpy()
 
     print("Computing CMC and mAP")
-    cmc, mAP = evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
+    evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
 
     print("Results ----------")
-    print("mAP: {:.1%}".format(mAP))
-    print("CMC curve")
-    for r in ranks:
-        print("Rank-{:<3}: {:.1%}".format(r, cmc[r-1]))
-    print("------------------")
+    # print("mAP: {:.1%}".format(mAP))
+    # print("CMC curve")
+    # for r in ranks:
+    #    print("Rank-{:<3}: {:.1%}".format(r, cmc[r-1]))
+    #cprint("------------------")
 
     if return_distmat:
         return distmat
-    return cmc[0]
+    # return cmc[0]
 
 
 if __name__ == '__main__':

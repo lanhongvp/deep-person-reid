@@ -6,6 +6,7 @@ import numpy as np
 import copy
 from collections import defaultdict
 import sys
+import pandas as pd
 
 try:
     from torchreid.eval_lib.cython_eval import eval_market1501_wrap
@@ -139,7 +140,7 @@ def eval_market1501(distmat, q_vids, g_vids, q_camids, g_camids, max_rank):
 
     return all_cmc, mAP
 
-def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0'):
+def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0',vis_ranked_res=False):
     q_num = distmat.shape[0]
     g_num = distmat.shape[1]
     aicity_results = {}
@@ -151,9 +152,12 @@ def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0'):
         aicity_results[q_id] = distmat_rank
     
     aicity_results = pd.DataFrame(list(aicity_results.items()),columns=['query_ids','gallery_ids'])
-    embed()
+    # embed()
     aicity_results = aicity_results.sort_values('query_ids')
     _write2txt(aicity_results,exp)
+    if vis_ranked_res:
+        arr_aicity_results = np.array(aicity_reuslts)
+
 
 
 def _write2txt(aicity_results,exp):
@@ -162,14 +166,14 @@ def _write2txt(aicity_results,exp):
             sep_c = ' '
             row_ranks = []
             idx_row = aicity_results.iloc[idx]['gallery_ids'][:100]
-            #embed()
+            # embed()
             for item in idx_row:
                 row_rank = str(item)
                 row_ranks.append(row_rank)
             sep_c = sep_c.join(row_ranks)
-            #embed()
+            # embed()
             sep_c = sep_c+'\n'
-            #embed()
+            # embed()
             f.write(sep_c)
         f.close()
 

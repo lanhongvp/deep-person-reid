@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .aicity666 import aiCity666
+from .aicity666 import aiCity666_veri
 
 __imgreid_factory = {
-    'aicity666':aiCity666
+    'aicity666':aiCity666_veri
 }
 
 

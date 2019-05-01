@@ -17,21 +17,24 @@ from scipy.misc import imsave
 
 from torchreid.utils.iotools import mkdir_if_missing, write_json, read_json
 
-class aiCity666(object):
+class aiCity666_veri(object):
     """
-        aiCity 666
+        aiCity 666 and veri 776
 
-        Dataset statistics:
+        AiCity 666 Dataset statistics:
         # vehicles: 333（train）+ 333（test）
         # images: 36953 (train) + 18290 (test) + 1052(query)
+        VeRi 776 Dataset
+        # vehicles: 576（train）+ 200（test）
+        # images: 37778 (train) + 11579 (test) + 1678(query)
     """
-    dataset_dir = 'aiCity'
+    dataset_dir = 'aiCity_veri'
 
     def __init__(self, root='../../lan_reid/data', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
         self.dataset_dir = osp.abspath(self.dataset_dir)
         #embed()
-        self.train_dir = osp.join(self.dataset_dir, 'image_train')
+        self.train_dir = osp.join(self.dataset_dir, 'image_train_all')
         self.query_dir = osp.join(self.dataset_dir, 'image_query')
         self.gallery_dir = osp.join(self.dataset_dir, 'image_test')
         # self.label_dir = self.dataset_dir + 'train_label.csv'
@@ -41,7 +44,7 @@ class aiCity666(object):
         query, num_query_vids, num_query_imgs = self._process_dir(self.query_dir,is_train=False)
         gallery, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False)
         # num_total_vids = num_train_vids + num_query_vids
-        num_total_vids = 666
+        num_total_vids = num_train_vids
         num_total_imgs = num_train_imgs + num_query_imgs + num_gallery_imgs
 
         print("=> aiCityVeRi 666 loaded")
