@@ -226,8 +226,8 @@ class aiCity666(object):
             dataset = []
             count = 0
             for img_path in img_paths:
-                vid = int(img_path.strip('.jpg').split('/')[-1])
-                dataset.append((img_path,vid,-1))
+                # vid = int(img_path.strip('.jpg').split('/')[-1])
+                dataset.append(img_path)
                 count = count + 1
             num_imgs = len(dataset)
             num_vids = -1
