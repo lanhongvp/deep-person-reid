@@ -3,9 +3,11 @@ from __future__ import division
 from __future__ import print_function
 
 from .aicity666 import aiCity666_veri
+from .aicity666 import aiCity666 
 
 __imgreid_factory = {
-    'aicity666':aiCity666_veri
+    'aicity666':aiCity666_veri,
+    'aicity_test':aiCity666
 }
 
 

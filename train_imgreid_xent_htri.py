@@ -25,9 +25,11 @@ from torchreid.utils.avgmeter import AverageMeter
 from torchreid.utils.logger import Logger
 from torchreid.utils.torchtools import count_num_param
 from torchreid.utils.reidtools import visualize_ranked_results
-from torchreid.eval_metrics import evaluate_aicity
+from torchreid.utils.test_CMC import track_info_average,get_track_id
+from torchreid.eval_metrics import evaluate_aicity,eval_aicity_track
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
+from IPython import embed
 
 
 parser = argparse.ArgumentParser(description='Train image model with cross entropy loss and hard triplet loss')
@@ -105,8 +107,11 @@ parser.add_argument('--gpu-devices', default='0', type=str,
                     help='gpu device ids for CUDA_VISIBLE_DEVICES')
 parser.add_argument('--vis-ranked-res', action='store_true',
                     help="visualize ranked results, only available in evaluation mode (default: False)")
-# AiCity setting
+# AiCity test setting
 parser.add_argument('--exp',type=str,default='exp0',help='aicity txt result name')
+parser.add_argument('--reranking',action= 'store_true', help= 'result re_ranking')
+parser.add_argument('--use_track_info',action='store_true',help='whether to use track info')
+parser.add_argument('--test_distance',type = str, default='global', help= 'test distance type')
 
 args = parser.parse_args()
 
@@ -208,7 +213,13 @@ def main():
 
     if args.evaluate:
         print("Evaluate only")
-        distmat = test(model, queryloader, galleryloader, use_gpu, return_distmat=True)
+        if args.use_track_info:
+            g_track_id = get_track_id(args.root)
+            distmat = test(model, queryloader, galleryloader, use_gpu, 
+                           dataset_q=dataset.query, dataset_g=dataset.gallery, 
+                           track_id=g_track_id, return_distmat=True)    
+        else:
+            distmat = test(model, queryloader, galleryloader, use_gpu, return_distmat=True)
         if args.vis_ranked_res:
             visualize_ranked_results(
                 distmat, dataset,
@@ -315,13 +326,18 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         end = time.time()
 
 
-def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], return_distmat=False):
+def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],dataset_q=None,dataset_g=None, track_id=None,return_distmat=False):
     batch_time = AverageMeter()
 
     model.eval()
 
     with torch.no_grad():
         qf, q_vids, q_camids = [], [], []
+        if args.use_track_info:
+            for q_idx in range(len(dataset_q)):
+                q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
+                q_imgs.append(q_img)
+
         for batch_idx, (imgs, vids, camids) in enumerate(queryloader):
             if use_gpu:
                 imgs = imgs.cuda()
@@ -341,6 +357,12 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
         print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
 
         gf, g_vids, g_camids = [], [], []
+
+        if args.use_track_info:
+            for g_idx in range(len(dataset_g)):
+                g_img = int(dataset_g[g_idx].split('/')[-1].strip('.jpg'))
+                g_imgs.append(g_img)
+
         for batch_idx, (imgs, vids, camids) in enumerate(galleryloader):
             if use_gpu:
                 imgs = imgs.cuda()
@@ -356,8 +378,9 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
         gf = torch.cat(gf, 0)
         g_vids = np.asarray(g_vids)
         g_camids = np.asarray(g_camids)
-
+        gt_f = track_info_average(track_id,gf)
         print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
+        print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))
     
     print("==> BatchTime(s)/BatchSize(img): {:.3f}/{}".format(batch_time.avg, args.test_batch))
 
@@ -367,8 +390,20 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20], retur
     distmat.addmm_(1, -2, qf, gf.t())
     distmat = distmat.numpy()
 
-    print("Computing CMC and mAP")
-    evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
+    print("------------------------")
+
+    if args.reranking:
+        from util.re_ranking import re_ranking
+        if args.test_distance == 'global':
+            print("Only using global branch for reranking")
+            distmat = re_ranking(qf,gt_f,k1=20, k2=6, lambda_value=0.3)
+    
+    print("Computing CMC and mAP after reranking")
+    if args.use_track_info:
+        eval_aicity_track(distmat,q_imgs,g_imgs,track_id,
+                          use_track_info=args.use_track_info,exp=args.exp)
+    else:
+        evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
 
     print("Results ----------")
     # print("mAP: {:.1%}".format(mAP))

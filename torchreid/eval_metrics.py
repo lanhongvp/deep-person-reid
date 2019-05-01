@@ -158,6 +158,37 @@ def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0',vis_ranked_res=F
     if vis_ranked_res:
         arr_aicity_results = np.array(aicity_reuslts)
 
+def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k=100,exp='exp0'):
+    q_num = distmat.shape[0]
+    g_num = distmat.shape[1]
+
+    test_rank_result = {}
+    # key: q_id
+    # value: k from 1 to 100
+    idx = 0
+
+    for q_id in q_imgs:
+        test_rank_tmp = []
+        distmat_cmp = np.argsort(distmat[idx,:])
+        distmat_rank_k = distmat_cmp[:rank_k]
+        if not use_track_info:
+#        embed()
+            for k in range(rank_k):
+                test_rank_tmp.append((g_imgs[distmat_rank_k[k]],k+1))
+            test_rank_result[q_id] = test_rank_tmp
+            idx = idx+1
+#        embed()
+        elif use_track_info:
+            cnt = 0 
+            for k in range(rank_k):
+                test_rank_tmp += map(lambda t_id:(t_id,k+1),list(track_id[distmat_rank_k[k]]))
+                cnt += len(list(track_id[distmat_rank_k[k]]))
+                if cnt >= rank_k:
+                    test_rank_result[q_id] = test_rank_tmp
+                    continue
+    test_rank_result_df = pd.DataFrame(list(test_rank_result.items()),columns=['query_ids','gallery_ids'])
+    test_result_df = test_rank_result_df.sort_values('query_ids')
+    _write2txt(test_result_df,exp)
 
 
 def _write2txt(aicity_results,exp):
