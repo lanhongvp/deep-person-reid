@@ -340,14 +340,14 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
     model.eval()
 
     with torch.no_grad():
-        qf, q_vids, q_camids, q_imgs = [], [], [], []
+        qf, q_imgs = [], []
         if args.use_track_info:
             for q_idx in range(len(dataset_q)):
                 # embed()
                 q_img = int(dataset_q[0][q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
-        for batch_idx, (imgs, vids, camids) in enumerate(queryloader):
+        for batch_idx, imgs in enumerate(queryloader):
             if use_gpu:
                 imgs = imgs.cuda()
 
@@ -357,22 +357,22 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
 
             features = features.data.cpu()
             qf.append(features)
-            q_vids.extend(vids)
-            q_camids.extend(camids)
+            # q_vids.extend(vids)
+            # q_camids.extend(camids)
         qf = torch.cat(qf, 0)
-        q_vids = np.asarray(q_vids)
-        q_camids = np.asarray(q_camids)
+        # q_vids = np.asarray(q_vids)
+        # q_camids = np.asarray(q_camids)
 
         print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
 
-        gf, g_vids, g_camids, g_imgs = [], [], [], []
+        gf, g_imgs = [], []
 
         if args.use_track_info:
             for g_idx in range(len(dataset_g)):
                 g_img = int(dataset_g[0][g_idx].split('/')[-1].strip('.jpg'))
                 g_imgs.append(g_img)
 
-        for batch_idx, (imgs, vids, camids) in enumerate(galleryloader):
+        for batch_idx, imgs in enumerate(galleryloader):
             if use_gpu:
                 imgs = imgs.cuda()
             
@@ -382,11 +382,11 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
 
             features = features.data.cpu()
             gf.append(features)
-            g_vids.extend(vids)
-            g_camids.extend(camids)
+            # g_vids.extend(vids)
+            # g_camids.extend(camids)
         gf = torch.cat(gf, 0)
-        g_vids = np.asarray(g_vids)
-        g_camids = np.asarray(g_camids)
+        # g_vids = np.asarray(g_vids)
+        # g_camids = np.asarray(g_camids)
         gt_f = track_info_average(track_id,gf)
         print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
         print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))

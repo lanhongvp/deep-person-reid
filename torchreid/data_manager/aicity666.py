@@ -218,7 +218,7 @@ class aiCity666(object):
                 test_track = test_track.split()
                 test_track_ids = list(map(lambda track_id_:dir_path+'/'+track_id_,test_track))
                 for t_id_dir in test_track_ids:
-                    dataset.append((t_id_dir,-1,-1))
+                    dataset.append(t_id_dir)
             num_vids = -1
             num_imgs = len(dataset)
             
