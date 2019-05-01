@@ -7,6 +7,7 @@ import copy
 from collections import defaultdict
 import sys
 import pandas as pd
+from IPython import embed
 
 try:
     from torchreid.eval_lib.cython_eval import eval_market1501_wrap
@@ -181,7 +182,8 @@ def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k
         elif use_track_info:
             cnt = 0 
             for k in range(rank_k):
-                test_rank_tmp += map(lambda t_id:(t_id,k+1),list(track_id[distmat_rank_k[k]]))
+                test_rank_tmp += list(map(lambda t_id:(t_id,k+1),list(track_id[distmat_rank_k[k]])))
+                #embed()
                 cnt += len(list(track_id[distmat_rank_k[k]]))
                 if cnt >= rank_k:
                     test_rank_result[q_id] = test_rank_tmp
