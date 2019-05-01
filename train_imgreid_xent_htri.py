@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 
 from torchreid import data_manager
-from torchreid.dataset_loader import ImageDataset
+from torchreid.dataset_loader import ImageDataset,ImageDatasetNo
 from torchreid import transforms as T
 from torchreid import models
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
@@ -172,13 +172,13 @@ def main():
     )
 
     queryloader = DataLoader(
-        ImageDataset(dataset.query, transform=transform_test),
+        ImageDatasetNo(dataset.query, transform=transform_test),
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
 
     galleryloader = DataLoader(
-        ImageDataset(dataset.gallery, transform=transform_test),
+        ImageDatasetNo(dataset.gallery, transform=transform_test),
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
