@@ -1,9 +1,9 @@
 import os
 from shutil import copyfile
 import pickle
-from util.iotools import *
+from utils.iotools import *
 
-root_dir = 'D:/0_ZJUAI/AICITY/AI_CITY/data'
+root_dir = '/home/lzhpc/home_lan/data'
 # You only need to change this line to your dataset download path
 download_path_aicity = root_dir+'/aiCity'
 # download_path_veri = root_dir+'/VeRi'
@@ -29,9 +29,9 @@ print('aiCity train num imgs: \t',len(tnames_aicity))
 
 # #---------------------------------------
 #train_all
-train_path = download_path + '/image_train'
+train_path = download_path_aicity + '/image_train'
 ta_save_path = save_path + '/image_train_all'
-copy_ori2dst(tnames,train_path,ta_save_path)
+copy_ori2dst(tnames_aicity,train_path,ta_save_path)
 
 # #---------------------------------------
 # #train_query_gallery

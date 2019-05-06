@@ -5,7 +5,7 @@ import os.path as osp
 import errno
 import json
 import shutil
-
+import pickle
 import torch
 
 
@@ -98,18 +98,22 @@ def write_pickle_aicity(download_path):
     with open(train_label,'r') as f1,open(train_label_vp,'r') as f2:
         for line1 in f1.readlines():
             tname = line1.strip('\n').split(',')
-            vid = int(tname[0])
-            timg = [tname[1]] 
+            vid = tname[0]
+            timg = tname[1] 
             tnames[timg] = vid
         idx = 1
         for line2 in f2.readlines():
             timg = str(idx).zfill(6)+'.jpg'
             vp = line2
-            tnames[timg] += '_{}'.format(vp)
-            idx += 1
+            if timg in tnames.keys():
+                tnames[timg] += '_{}'.format(vp)
+                idx += 1
+            else:
+                continue
         pickle.dump(tnames,tnames_p)
         tnames_p.close()
-        f.close()
+        f1.close()
+        f2.close()
 
 def write_pickle_veri(download_path):
     if not os.path.isdir(download_path):
