@@ -108,9 +108,10 @@ def write_pickle_aicity(download_path):
             vp = line2
             if timg in tnames.keys():
                 tnames[timg] += '_{}'.format(vp)
-                idx += 1
             else:
                 continue
+            idx += 1
+        print(idx)
         pickle.dump(tnames,tnames_p)
         tnames_p.close()
         f1.close()
@@ -151,20 +152,21 @@ def copy_ori2dst(ori_dict,ori_path,save_path):
         os.mkdir(save_path)
 
     for item in ori_dict.items():
-        
         tvid_tvp = item[1].strip('\n')
+        #print('tvid tvp',tvid_tvp)
         tvid = tvid_tvp.split('_')[0]
         tvp = tvid_tvp.split('_')[1]
+        # embed()
         timgs = item[0]
         # print(timgs)
         # for timg in timgs:
         src_path = ori_path + '/' + timgs
         dst_path = save_path
-        #embed()
+        # embed()
         if not os.path.isdir(dst_path):
             os.mkdir(dst_path)
-        copy(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timgs)
-        #embed()
+        copyfile(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timgs)
+        # embed()
 
 def ori2dst_split(ori_dict,ori_path,save_path):
     """
