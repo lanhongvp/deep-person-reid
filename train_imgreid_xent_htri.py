@@ -277,13 +277,14 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             imgs, vids, vpids = imgs.cuda(), vids.cuda(), vpids.cuda()
         
         outputs_vid,outputs_vpid,features = model(imgs)
+        # embed()
         if args.htri_only:
             if isinstance(features, tuple):
                 loss = DeepSupervision(criterion_htri, features, vids)
             else:
                 loss = criterion_htri(features, vids)
         else:
-            if isinstance(outputs, tuple):
+            if isinstance(outputs_vid, tuple):
                 xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
             else:
                 xent_loss_vid = criterion_xent(outputs_vid, vids)
@@ -293,11 +294,13 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             if isinstance(features, tuple):
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
             else:
+                embed()
                 htri_loss = criterion_htri(features, vids)
             
             loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
         optimizer.zero_grad()
-        loss.backward()
+        xent_loss.backward()
+        htri_loss.backward()
         optimizer.step()
 
         batch_time.update(time.time() - end)
