@@ -16,8 +16,8 @@ class DenseNet121(nn.Module):
         self.loss = loss
         densenet121 = torchvision.models.densenet121(pretrained=True)
         self.base = densenet121.features
-        self.classifier_vid = nn.Linear(2048, num_classes_vid)
-        self.classifier_vpid = nn.Linear(2048, num_classes_vpid)
+        self.classifier_vid = nn.Linear(1024, num_classes_vid)
+        self.classifier_vpid = nn.Linear(1024, num_classes_vpid)
         self.feat_dim = 1024
 
     def forward(self, x):

@@ -129,7 +129,7 @@ class aiCity666(object):
         # vehicles: 333（train）+ 333（test）
         # images: 36953 (train) + 18290 (test) + 1052(query)
     """
-    dataset_dir = 'aiCity_s'
+    dataset_dir = 'aiCity_vp'
 
     def __init__(self, root='../../lan_reid/data', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
@@ -161,6 +161,7 @@ class aiCity666(object):
         self.train = train
         
         self.num_train_vids = num_train_vids
+        self.num_train_vpids = 5
 
     def _check_before_run(self):
         """Check if all files are available before going deeper"""

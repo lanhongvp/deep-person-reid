@@ -137,12 +137,6 @@ def main():
     else:
         print("Currently using CPU (GPU is highly recommended)")
 
-    print("Initializing dataset {}".format(args.dataset))
-    dataset = data_manager.init_imgreid_dataset(
-        root=args.root, name=args.dataset, split_id=args.split_id,
-        cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
-    )
-    print("Dataset test {}".format(dataset))
     dataset_m = data_manager.init_imgreid_dataset(
         root=args.root, name=args.dataset_m, split_id=args.split_id,
         cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
