@@ -187,8 +187,9 @@ def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k
                 cnt += len(list(track_id[distmat_rank_k[k]]))
                 if cnt >= rank_k:
                     test_rank_result[q_id] = test_rank_tmp
-                    continue
-    # embed()
+                    idx = idx + 1
+                    break
+    #embed()
     test_rank_result_df = pd.DataFrame(list(test_rank_result.items()),columns=['query_ids','gallery_ids'])
     test_result_df = test_rank_result_df.sort_values('query_ids')
     _write2txt(test_result_df,exp)
@@ -202,7 +203,7 @@ def _write2txt(aicity_results,exp):
             idx_row = aicity_results.iloc[idx]['gallery_ids'][:100]
             # embed()
             for item in idx_row:
-                row_rank = str(item)
+                row_rank = str(item[0])
                 row_ranks.append(row_rank)
             sep_c = sep_c.join(row_ranks)
             # embed()
