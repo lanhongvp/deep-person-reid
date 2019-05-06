@@ -5,9 +5,10 @@ import os.path as osp
 import errno
 import json
 import shutil
+from shutil import copyfile
 import pickle
 import torch
-
+from IPython import embed
 
 def mkdir_if_missing(directory):
     if not osp.exists(directory):
@@ -150,18 +151,20 @@ def copy_ori2dst(ori_dict,ori_path,save_path):
         os.mkdir(save_path)
 
     for item in ori_dict.items():
-        tvid_tvp = item[1]
+        
+        tvid_tvp = item[1].strip('\n')
         tvid = tvid_tvp.split('_')[0]
         tvp = tvid_tvp.split('_')[1]
         timgs = item[0]
         # print(timgs)
-        for timg in timgs:
-            src_path = ori_path + '/' + timg
-            dst_path = save_path
-            if not os.path.isdir(dst_path):
-                os.mkdir(dst_path)
-            copyfile(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timg)
-
+        # for timg in timgs:
+        src_path = ori_path + '/' + timgs
+        dst_path = save_path
+        #embed()
+        if not os.path.isdir(dst_path):
+            os.mkdir(dst_path)
+        copy(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timgs)
+        #embed()
 
 def ori2dst_split(ori_dict,ori_path,save_path):
     """
