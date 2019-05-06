@@ -166,29 +166,18 @@ def main():
 
     trainloader = DataLoader(
         ImageDataset(dataset_m.train, transform=transform_train),
-        sampler=RandomIdentitySampler(dataset.train, args.train_batch, args.num_instances),
+        sampler=RandomIdentitySampler(dataset_m.train, args.train_batch, args.num_instances),
         batch_size=args.train_batch, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=True,
     )
 
-    queryloader = DataLoader(
-        ImageDatasetNo(dataset.query, transform=transform_test),
-        batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=False,
-    )
-
-    galleryloader = DataLoader(
-        ImageDatasetNo(dataset.gallery, transform=transform_test),
-        batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=False,
-    )
-
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes=dataset_m.num_train_vids, loss={'xent', 'htri'})
+    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,
+                              loss={'xent', 'htri'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
-        criterion_xent = CrossEntropyLabelSmooth(num_classes=dataset.num_train_vids, use_gpu=use_gpu)
+        criterion_xent = CrossEntropyLabelSmooth(num_classes=dataset_m.num_train_vids, use_gpu=use_gpu)
     else:
         criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
@@ -287,13 +276,13 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
     model.train()
 
     end = time.time()
-    for batch_idx, (imgs, vids, _) in enumerate(trainloader):
+    for batch_idx, (imgs, vids, _, vpids) in enumerate(trainloader):
         data_time.update(time.time() - end)
         
         if use_gpu:
-            imgs, vids = imgs.cuda(), vids.cuda()
+            imgs, vids, vpids = imgs.cuda(), vids.cuda(), vpids.cuda()
         
-        outputs, features = model(imgs)
+        outputs_vid,outputs_vpid,features = model(imgs)
         if args.htri_only:
             if isinstance(features, tuple):
                 loss = DeepSupervision(criterion_htri, features, vids)
@@ -301,9 +290,11 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 loss = criterion_htri(features, vids)
         else:
             if isinstance(outputs, tuple):
-                xent_loss = DeepSupervision(criterion_xent, outputs, vids)
+                xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
             else:
-                xent_loss = criterion_xent(outputs, vids)
+                xent_loss_vid = criterion_xent(outputs_vid, vids)
+                xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
+                xent_loss = xent_loss_vid + xent_loss_vpid
             
             if isinstance(features, tuple):
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
@@ -327,103 +318,14 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
+                  'Xent vid Loss {xent_loss_vid:.4f}\t'
+                  'Xent vpid Loss {xent_loss_vpid:.4f}\t'
                   'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss=xent_losses, htri_loss=htri_losses))
+                   data_time=data_time, loss=losses, xent_loss=xent_losses, xent_loss_vid=xent_loss_vid,
+                   xent_loss_vpid=xent_loss_vpid, htri_loss=htri_losses))
         
         end = time.time()
-
-
-def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],dataset_q=None,dataset_g=None, track_id=None,return_distmat=False):
-    batch_time = AverageMeter()
-
-    model.eval()
-
-    with torch.no_grad():
-        qf, q_imgs = [], []
-        if args.use_track_info:
-            for q_idx in range(len(dataset_q)):
-                # embed()
-                q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
-                q_imgs.append(q_img)
-
-        for batch_idx, imgs in enumerate(queryloader):
-            if use_gpu:
-                imgs = imgs.cuda()
-
-            end = time.time()
-            features = model(imgs)
-            batch_time.update(time.time() - end)
-
-            features = features.data.cpu()
-            qf.append(features)
-            # q_vids.extend(vids)
-            # q_camids.extend(camids)
-        qf = torch.cat(qf, 0)
-        # q_vids = np.asarray(q_vids)
-        # q_camids = np.asarray(q_camids)
-
-        print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
-
-        gf, g_imgs = [], []
-
-        if args.use_track_info:
-            for g_idx in range(len(dataset_g)):
-                g_img = int(dataset_g[g_idx].split('/')[-1].strip('.jpg'))
-                g_imgs.append(g_img)
-
-        for batch_idx, imgs in enumerate(galleryloader):
-            if use_gpu:
-                imgs = imgs.cuda()
-            
-            end = time.time()
-            features = model(imgs)
-            batch_time.update(time.time() - end)
-
-            features = features.data.cpu()
-            gf.append(features)
-            # g_vids.extend(vids)
-            # g_camids.extend(camids)
-        gf = torch.cat(gf, 0)
-        # g_vids = np.asarray(g_vids)
-        # g_camids = np.asarray(g_camids)
-        gt_f = track_info_average(track_id,gf)
-        print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
-        print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))
-    
-    print("==> BatchTime(s)/BatchSize(img): {:.3f}/{}".format(batch_time.avg, args.test_batch))
-
-    m, n = qf.size(0), gf.size(0)
-    distmat = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
-              torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
-    distmat.addmm_(1, -2, qf, gf.t())
-    distmat = distmat.numpy()
-
-    print("------------------------")
-
-    if args.reranking:
-        from torchreid.utils.re_ranking import re_ranking
-        if args.test_distance == 'global':
-            print("Only using global branch for reranking")
-            distmat = re_ranking(qf,gt_f,k1=20, k2=6, lambda_value=0.3)
-    
-    print("Computing CMC and mAP after reranking")
-    if args.use_track_info:
-        eval_aicity_track(distmat,q_imgs,g_imgs,track_id,
-                          use_track_info=args.use_track_info,exp=args.exp)
-    else:
-        evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
-
-    print("Results ----------")
-    # print("mAP: {:.1%}".format(mAP))
-    # print("CMC curve")
-    # for r in ranks:
-    #    print("Rank-{:<3}: {:.1%}".format(r, cmc[r-1]))
-    #cprint("------------------")
-
-    if return_distmat:
-        return distmat
-    # return cmc[0]
 
 
 if __name__ == '__main__':

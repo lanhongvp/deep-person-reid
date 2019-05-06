@@ -11,12 +11,13 @@ __all__ = ['DenseNet121']
 
 
 class DenseNet121(nn.Module):
-    def __init__(self, num_classes, loss={'xent'}, **kwargs):
+    def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
         super(DenseNet121, self).__init__()
         self.loss = loss
         densenet121 = torchvision.models.densenet121(pretrained=True)
         self.base = densenet121.features
-        self.classifier = nn.Linear(1024, num_classes)
+        self.classifier_vid = nn.Linear(2048, num_classes_vid)
+        self.classifier_vpid = nn.Linear(2048, num_classes_vpid)
         self.feat_dim = 1024
 
     def forward(self, x):
@@ -25,11 +26,12 @@ class DenseNet121(nn.Module):
         f = x.view(x.size(0), -1)
         if not self.training:
             return f
-        y = self.classifier(f)
-        
+        y_vid = self.classifier_vid(f)
+        y_vpid = self.classifier_vpid(f)
+
         if self.loss == {'xent'}:
-            return y
+            return y_vid, y_vpid
         elif self.loss == {'xent', 'htri'}:
-            return y, f
+            return y_vid, y_vpid, f
         else:
             raise KeyError("Unsupported loss: {}".format(self.loss))
