@@ -28,7 +28,7 @@ def read_image(img_path):
     return img
 
 
-class ImageDataset(Dataset):
+class ImageDataset_vp(Dataset):
     """Image Person ReID Dataset"""
     def __init__(self, dataset, transform=None):
         self.dataset = dataset
@@ -45,6 +45,24 @@ class ImageDataset(Dataset):
             img = self.transform(img)
         
         return img, vid, camid, vpid
+
+class ImageDataset(Dataset):
+    """Image Person ReID Dataset"""
+    def __init__(self, dataset, transform=None):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img_path, vid, camid = self.dataset[index]
+        img = read_image(img_path)
+        
+        if self.transform is not None:
+            img = self.transform(img)
+        
+        return img, vid, camid
 
 
 class ImageDatasetNo(Dataset):

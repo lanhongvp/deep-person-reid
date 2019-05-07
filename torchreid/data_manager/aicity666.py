@@ -121,7 +121,7 @@ class aiCity666_veri(object):
         #embed()
         return dataset,num_vids,num_imgs
 
-class aiCity666(object):
+class aiCity666_vp(object):
     """
         aiCity 666 
 
@@ -311,11 +311,10 @@ class aiCity666_raw(object):
             dataset = []
             count = 0
             for img_path in img_paths:
-                vpid = int(img_path.split('/')[-1].split('_')[1])
                 vid = vid_list[count]
                 if relabel:
                     vid = vlabel[count]
-                dataset.append((img_path, vid,-1,vpid))
+                dataset.append((img_path, vid,-1))
                 count = count + 1
             num_imgs = len(dataset)
 

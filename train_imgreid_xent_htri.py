@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 
 from torchreid import data_manager
-from torchreid.dataset_loader import ImageDataset,ImageDatasetNo
+from torchreid.dataset_loader import ImageDataset,ImageDatasetNo,ImageDataset_vp
 from torchreid import transforms as T
 from torchreid import models
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
@@ -36,9 +36,9 @@ parser = argparse.ArgumentParser(description='Train image model with cross entro
 # Datasets
 parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
-parser.add_argument('-d', '--dataset', type=str, default='aicity_test',
+parser.add_argument('-d', '--dataset', type=str, default='aicity_raw',
                     choices=data_manager.get_names())
-parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666',
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_vp',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -158,8 +158,8 @@ def main():
 
     pin_memory = True if use_gpu else False
 
-    trainloader = DataLoader(
-        ImageDataset(dataset_m.train, transform=transform_train),
+    trainloader_vp = DataLoader(
+        ImageDataset_vp(dataset_m.train, transform=transform_train),
         sampler=RandomIdentitySampler(dataset_m.train, args.train_batch, args.num_instances),
         batch_size=args.train_batch, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=True,
