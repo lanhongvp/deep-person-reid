@@ -152,7 +152,7 @@ def main():
 
     pin_memory = True if use_gpu else False
 
-    trainloader_vp = DataLoader(
+    trainloader = DataLoader(
         ImageDataset_vp(dataset_m.train, transform=transform_train),
         sampler=RandomIdentitySampler(dataset_m.train, args.train_batch, args.num_instances),
         batch_size=args.train_batch, num_workers=args.workers,
