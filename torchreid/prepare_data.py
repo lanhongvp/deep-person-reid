@@ -13,7 +13,7 @@ save_path = root_dir+'/aiCity_vp'
 if not os.path.isdir(save_path):
     os.mkdir(save_path)
 
-make_list(download_path_aicity,'./imglist_b.txt', './labels_b.txt')
+make_list(download_path_aicity+'/image_train',download_path_aicity+'/imglist_b.txt')
 # write the train data to pickle
 write_pickle_aicity(download_path_aicity)
 # write_pickle_veri(download_path_veri)
@@ -31,7 +31,7 @@ print('aiCity train num imgs: \t',len(tnames_aicity))
 
 # #---------------------------------------
 #train_all
-train_path = download_path_aicity + '/image_train'
+train_path = download_path_aicity + '/image_train_all'
 ta_save_path = save_path + '/image_train_all'
 copy_ori2dst(tnames_aicity,train_path,ta_save_path)
 

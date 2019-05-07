@@ -84,17 +84,14 @@ def dict_value_slice(ori_dict,st,ed):
     return slice_dict
 
 
-def make_list(rootpath, savename, labelname):
+def make_list(rootpath, savename):
     imgs = os.listdir(rootpath)
     results = []
-    labels = []
     for img in imgs:
         results.append(os.path.join(rootpath, img) + '\n')
-        labels.append('0\n')
     results.sort()
     with open(savename, 'w') as f:
         f.writelines(results)
-    with open(labelname, 'w') as
 
 
 def write_pickle_aicity(download_path):
@@ -121,16 +118,16 @@ def write_pickle_aicity(download_path):
         img_path = f1.readline()
         # print(img_path)
         img_name = img_path.strip('\n').split('/')[-1]
-        img_name = img_name.split('\\')[-1]
+        # img_name = img_name.split('\\')[-1]
         # print('img_name\n',img_name)
         vid = img_name.split('_')[0]
         # print('vid\n',vid)
-        img_name = img_name.split('_')[1]
+        # img_name = img_name.split('_')[1]
         # print('img_name\n',img_name)
         vpid = f2.readline()
         vid_vpid = vid+'_'+vpid
         tnames[img_name] = vid_vpid
-        pickle.dump(tnames,tnames_p)
+    pickle.dump(tnames,tnames_p)
     tnames_p.close()
     f1.close()
     f2.close()
@@ -168,7 +165,7 @@ def copy_ori2dst(ori_dict,ori_path,save_path):
     """
     if not os.path.isdir(save_path):
         os.mkdir(save_path)
-
+    print('Total cnt',len(ori_dict.items()))
     for item in ori_dict.items():
         tvid_tvp = item[1].strip('\n')
         #print('tvid tvp',tvid_tvp)
@@ -183,7 +180,7 @@ def copy_ori2dst(ori_dict,ori_path,save_path):
         # embed()
         if not os.path.isdir(dst_path):
             os.mkdir(dst_path)
-        copyfile(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timgs)
+        copyfile(src_path, dst_path+'/'+tvid+'_'+tvp+'_'+timgs.split('_')[1])
         # embed()
 
 def ori2dst_split(ori_dict,ori_path,save_path):
