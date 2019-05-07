@@ -82,6 +82,8 @@ parser.add_argument('--htri-only', action='store_true', default=False,
                     help="if this is True, only htri loss is used in training")
 parser.add_argument('--lambda-xent', type=float, default=1,
                     help="weight to balance cross entropy loss")
+parser.add_argument('--lambda-xent-vpid', type=float, default=0.1,
+                    help="weight to balance cross entropy loss")
 parser.add_argument('--lambda-htri', type=float, default=1,
                     help="weight to balance hard triplet loss")
 parser.add_argument('--label-smooth', action='store_true',
@@ -286,7 +288,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 xent_loss_vid = criterion_xent(outputs_vid, vids)
                 # xent_loss_vid = 0
                 xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
-                xent_loss = xent_loss_vid + xent_loss_vpid
+                xent_loss = xent_loss_vid + args.lambda_xent_vpid * xent_loss_vpid
             
             if isinstance(features, tuple):
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
@@ -295,7 +297,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 htri_loss = criterion_htri(features, vids)
                 # htri_loss = 0
             
-            loss = args.lambda_xent * xent_loss
+            loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
