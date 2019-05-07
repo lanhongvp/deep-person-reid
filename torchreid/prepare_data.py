@@ -13,9 +13,12 @@ save_path = root_dir+'/aiCity_vp'
 if not os.path.isdir(save_path):
     os.mkdir(save_path)
 
-make_list(download_path_aicity+'/image_train',download_path_aicity+'/imglist_b.txt')
+make_list(download_path_aicity+'/image_train',download_path_aicity+'/imglist_s.txt')
+make_list(download_path_aicity+'/image_train_all',download_path_aicity+'/imglist_a.txt')
+concate_label_vp(download_path_aicity)
+
 # write the train data to pickle
-write_pickle_aicity(download_path_aicity)
+# write_pickle_aicity(download_path_aicity)
 # write_pickle_veri(download_path_veri)
 
 f_aicity = open('tnames_aic.pkl','rb')

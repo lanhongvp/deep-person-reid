@@ -93,6 +93,47 @@ def make_list(rootpath, savename):
     with open(savename, 'w') as f:
         f.writelines(results)
 
+def concate_label_vp(rootpath):
+    com_label = rootpath + '/label_c.txt'
+    com_img = rootpath + '/imglist_c.txt'
+    part_label = rootpath + '/label_b.txt'
+    part_img = rootpath + '/imglist_b.txt'
+    whole_vp_label = {}
+    tnames_p = open('tnames_aic.pkl','wb')
+    com_vp_label = combine_label_img(com_img,com_label)
+    part_vp_label = combine_label_img(part_img,part_label)
+    whole_vp_label = com_vp_label + part_vp_label
+    pickle.dump(whole_vp_label,tnames_p)
+    tnames_p.close()
+
+def combine_label_img(img_dir,label_dir):
+    # label_dir: viewpoint label dir
+    # img_dir: img dir
+    # return: dict with key-img_name value-viewpoint and vehicle id label
+    cnt = 0
+    with open(label_dir,'r') as f:
+        for index, line in enumerate(f):
+            cnt += 1
+    print('img_dir {} cnt {}'.format(img_dir,cnt))
+    f1 = open(img_dir,'r')
+    f2 = open(label_dir,'r')
+    vp_label = {}
+    for i in range(cnt):
+        img_path = f1.readline()
+        # print(img_path)
+        img_name = img_path.strip('\n').split('/')[-1]
+        # img_name = img_name.split('\\')[-1]
+        # print('img_name\n',img_name)
+        vid = img_name.split('_')[0]
+        # print('vid\n',vid)
+        # img_name = img_name.split('_')[1]
+        # print('img_name\n',img_name)
+        vpid = f2.readline()
+        vid_vpid = vid+'_'+vpid
+        vp_label[img_name] = vid_vpid
+    f1.close()
+    f2.close()
+    return vp_label
 
 def write_pickle_aicity(download_path):
     # write the aicity dataset to pickle file with vehicle id and viewpoint
@@ -100,8 +141,8 @@ def write_pickle_aicity(download_path):
     if not os.path.isdir(download_path):
         print('please change the download_path')
 
-    train_label = download_path + '/imglist_b.txt'
-    train_label_vp = download_path + '/labels_b.txt'
+    train_label = download_path + '/imglist.txt'
+    train_label_vp = download_path + '/labels.txt'
     tnames = {}
     tnames_p = open('tnames_aic.pkl','wb')
     # get the total count lines
