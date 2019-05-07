@@ -8,13 +8,12 @@ root_dir = '/home/lzhpc/home_lan/data'
 # You only need to change this line to your dataset download path
 download_path_aicity = root_dir+'/aiCity_s'
 # download_path_veri = root_dir+'/VeRi'
-save_path = root_dir+'/aiCity_vp'
+save_path = root_dir+'/aiCity_vp_all'
 
 if not os.path.isdir(save_path):
     os.mkdir(save_path)
 
-make_list(download_path_aicity+'/image_train',download_path_aicity+'/imglist_s.txt')
-make_list(download_path_aicity+'/image_train_all',download_path_aicity+'/imglist_a.txt')
+# make_list(download_path_aicity+'/image_train',download_path_aicity+'/imglist_p.txt')
 concate_label_vp(download_path_aicity)
 
 # write the train data to pickle

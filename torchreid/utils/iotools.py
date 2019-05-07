@@ -18,7 +18,6 @@ def mkdir_if_missing(directory):
             if e.errno != errno.EEXIST:
                 raise
 
-
 def check_isfile(path):
     isfile = osp.isfile(path)
     if not isfile:
@@ -44,6 +43,11 @@ def save_checkpoint(state, is_best=False, fpath='checkpoint.pth.tar'):
     torch.save(state, fpath)
     if is_best:
         shutil.copy(fpath, osp.join(osp.dirname(fpath), 'best_model.pth.tar'))
+
+def merge_two_dicts(x,y):
+    z = x.copy()
+    z.update(y)
+    return z
 
 def dict_key_slice(ori_dict, start, end):
     """
@@ -94,15 +98,18 @@ def make_list(rootpath, savename):
         f.writelines(results)
 
 def concate_label_vp(rootpath):
-    com_label = rootpath + '/label_c.txt'
+    com_label = rootpath + '/labels_c.txt'
     com_img = rootpath + '/imglist_c.txt'
-    part_label = rootpath + '/label_b.txt'
-    part_img = rootpath + '/imglist_b.txt'
+    part_label = rootpath + '/labels_p.txt'
+    part_img = rootpath + '/imglist_p.txt'
     whole_vp_label = {}
     tnames_p = open('tnames_aic.pkl','wb')
     com_vp_label = combine_label_img(com_img,com_label)
     part_vp_label = combine_label_img(part_img,part_label)
-    whole_vp_label = com_vp_label + part_vp_label
+    print('common keys',com_vp_label.keys() & part_vp_label.keys())
+#    print('com keys',com_vp_label.keys())
+#    print('part keys',part_vp_label.keys())    
+    whole_vp_label = merge_two_dicts(com_vp_label,part_vp_label)
     pickle.dump(whole_vp_label,tnames_p)
     tnames_p.close()
 
@@ -209,7 +216,9 @@ def copy_ori2dst(ori_dict,ori_path,save_path):
     print('Total cnt',len(ori_dict.items()))
     for item in ori_dict.items():
         tvid_tvp = item[1].strip('\n')
-        #print('tvid tvp',tvid_tvp)
+        if len(tvid_tvp)==1:
+            break
+        # print('tvid tvp',tvid_tvp)
         tvid = tvid_tvp.split('_')[0]
         tvp = tvid_tvp.split('_')[1]
         # embed()
