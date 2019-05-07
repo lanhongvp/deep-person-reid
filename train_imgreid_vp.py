@@ -137,12 +137,7 @@ def main():
     else:
         print("Currently using CPU (GPU is highly recommended)")
 
-    print("Initializing dataset {}".format(args.dataset))
-    dataset = data_manager.init_imgreid_dataset(
-        root=args.root, name=args.dataset, split_id=args.split_id,
-        cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
-    )
-    print("Dataset test {}".format(dataset))
+    
     dataset_m = data_manager.init_imgreid_dataset(
         root=args.root, name=args.dataset_m, split_id=args.split_id,
         cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
@@ -152,12 +147,6 @@ def main():
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
         T.RandomHorizontalFlip(),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
-    transform_test = T.Compose([
-        T.Resize((args.height, args.width)),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
@@ -173,7 +162,7 @@ def main():
 
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,loss={'xent', 'htri'})
+    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,loss={'xent'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
@@ -282,7 +271,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         if use_gpu:
             imgs, vids, vpids = imgs.cuda(), vids.cuda(), vpids.cuda()
         
-        outputs_vid,outputs_vpid,features = model(imgs)
+        outputs_vid,outputs_vpid = model(imgs)
         if args.htri_only:
             if isinstance(features, tuple):
                 loss = DeepSupervision(criterion_htri, features, vids)
@@ -296,12 +285,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
                 xent_loss = xent_loss_vpid
             
-            if isinstance(features, tuple):
-                htri_loss = DeepSupervision(criterion_htri, features, vids)
-            else:
-                htri_loss = criterion_htri(features, vids)
             
-            loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
+            loss = args.lambda_xent * xent_loss
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -317,12 +302,9 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
-                #   'Xent vid Loss {xent_loss_vid:.4f}\t'
-                #   'Xent vpid Loss {xent_loss_vpid:.4f}\t'
-                  'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
+                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss=xent_losses, htri_loss=htri_losses))
+                   data_time=data_time, loss=losses, xent_loss=xent_losses))
         
         end = time.time()
 
