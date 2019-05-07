@@ -83,7 +83,20 @@ def dict_value_slice(ori_dict,st,ed):
         slice_dict[vid] = tmp_name
     return slice_dict
 
-  
+
+def make_list(rootpath, savename, labelname):
+    imgs = os.listdir(rootpath)
+    results = []
+    labels = []
+    for img in imgs:
+        results.append(os.path.join(rootpath, img) + '\n')
+        labels.append('0\n')
+    results.sort()
+    with open(savename, 'w') as f:
+        f.writelines(results)
+    with open(labelname, 'w') as
+
+
 def write_pickle_aicity(download_path):
     # write the aicity dataset to pickle file with vehicle id and viewpoint
     # 1: front 2: front-side 3:side 4:rear-side 5:rear

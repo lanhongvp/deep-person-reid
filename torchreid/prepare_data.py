@@ -13,6 +13,7 @@ save_path = root_dir+'/aiCity_vp'
 if not os.path.isdir(save_path):
     os.mkdir(save_path)
 
+make_list(download_path_aicity,'./imglist_b.txt', './labels_b.txt')
 # write the train data to pickle
 write_pickle_aicity(download_path_aicity)
 # write_pickle_veri(download_path_veri)
