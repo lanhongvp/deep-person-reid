@@ -7,7 +7,85 @@ from torch.nn import functional as F
 import torchvision
 
 
-__all__ = ['ResNet50', 'ResNet101', 'ResNet50M']
+__all__ = ['ResNet18', 'ResNet50', 'ResNet101', 'ResNet50M']
+
+class ResNet18(nn.Module):
+    def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
+        super(ResNet50, self).__init__()
+        self.loss = loss
+        resnet18 = torchvision.models.resnet18(pretrained=True)
+        self.base = nn.Sequential(*list(resnet18.children())[:-2])
+        self.classifier_vid = nn.Linear(512, num_classes_vid)
+        self.classifier_vpid = nn.Linear(512, num_classes_vpid)
+        self.feat_dim = 512
+
+    def forward(self, x):
+        x = self.base(x)
+        x = F.avg_pool2d(x, x.size()[2:])
+        f = x.view(x.size(0), -1)
+        if not self.training:
+            return f
+        y_vid = self.classifier_vid(f)
+        y_vpid = self.classifier_vpid(f)
+
+        if self.loss == {'xent'}:
+            return y_vid, y_vpid
+        elif self.loss == {'xent', 'htri'}:
+            return y_vid, y_vpid, f
+        else:
+            raise KeyError("Unsupported loss: {}".format(self.loss))
+
+
+class ResNet50(nn.Module):
+    def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
+        super(ResNet50, self).__init__()
+        self.loss = loss
+        resnet50 = torchvision.models.resnet50(pretrained=True)
+        self.base = nn.Sequential(*list(resnet50.children())[:-2])
+        self.classifier_vid = nn.Linear(2048, num_classes_vid)
+        self.classifier_vpid = nn.Linear(2048, num_classes_vpid)
+        self.feat_dim = 2048
+
+    def forward(self, x):
+        x = self.base(x)
+        x = F.avg_pool2d(x, x.size()[2:])
+        f = x.view(x.size(0), -1)
+        if not self.training:
+            return f
+        y_vid = self.classifier_vid(f)
+        y_vpid = self.classifier_vpid(f)
+
+        if self.loss == {'xent'}:
+            return y_vid, y_vpid
+        elif self.loss == {'xent', 'htri'}:
+            return y_vid, y_vpid, f
+        else:
+            raise KeyError("Unsupported loss: {}".format(self.loss))
+
+
+class ResNet101(nn.Module):
+    def __init__(self, num_classes, loss={'xent'}, **kwargs):
+        super(ResNet101, self).__init__()
+        self.loss = loss
+        resnet101 = torchvision.models.resnet101(pretrained=True)
+        self.base = nn.Sequential(*list(resnet101.children())[:-2])
+        self.classifier = nn.Linear(2048, num_classes)
+        self.feat_dim = 2048 # feature dimension
+
+    def forward(self, x):
+        x = self.base(x)
+        x = F.avg_pool2d(x, x.size()[2:])
+        f = x.view(x.size(0), -1)
+        if not self.training:
+            return f
+        y = self.classifier(f)
+
+        if self.loss == {'xent'}:
+            return y
+        elif self.loss == {'xent', 'htri'}:
+            return y, f
+        else:
+            raise KeyError("Unsupported loss: {}".format(self.loss))
 
 
 class ResNet50(nn.Module):
