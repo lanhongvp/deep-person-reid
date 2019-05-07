@@ -169,11 +169,12 @@ def main():
     model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,
                               loss={'xent', 'htri'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
-
+    # embed()
     if args.label_smooth:
         criterion_xent = CrossEntropyLabelSmooth(num_classes=dataset_m.num_train_vids, use_gpu=use_gpu)
     else:
         criterion_xent = nn.CrossEntropyLoss()
+        #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
     
     optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
@@ -294,13 +295,12 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             if isinstance(features, tuple):
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
             else:
-                embed()
+                # embed()
                 htri_loss = criterion_htri(features, vids)
             
             loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
         optimizer.zero_grad()
-        xent_loss.backward()
-        htri_loss.backward()
+        loss.backward()
         optimizer.step()
 
         batch_time.update(time.time() - end)

@@ -199,7 +199,7 @@ class aiCity666(object):
                 vid = vid_list[count]
                 if relabel:
                     vid = vlabel[count]
-                dataset.append((img_path, vid,-1,vpid))
+                dataset.append((img_path, vid,-1,vpid-1))
                 count = count + 1
             num_imgs = len(dataset)
 
