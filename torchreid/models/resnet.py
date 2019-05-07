@@ -11,7 +11,7 @@ __all__ = ['ResNet18', 'ResNet50', 'ResNet101', 'ResNet50M']
 
 class ResNet18(nn.Module):
     def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
-        super(ResNet50, self).__init__()
+        super(ResNet18, self).__init__()
         self.loss = loss
         resnet18 = torchvision.models.resnet18(pretrained=True)
         self.base = nn.Sequential(*list(resnet18.children())[:-2])
