@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from .aicity666 import aiCity666_veri
-from .aicity666 import aiCity666 
+from .aicity666 import aiCity666_raw
+from .aicity666 import aiCity666_vp 
 
 __imgreid_factory = {
     'aicity666_vp':aiCity666_vp,
