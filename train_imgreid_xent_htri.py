@@ -150,12 +150,6 @@ def main():
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    transform_test = T.Compose([
-        T.Resize((args.height, args.width)),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-
     pin_memory = True if use_gpu else False
 
     trainloader_vp = DataLoader(
@@ -289,8 +283,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             if isinstance(outputs_vid, tuple):
                 xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
             else:
-                # xent_loss_vid = criterion_xent(outputs_vid, vids)
-                xent_loss_vid = 0
+                xent_loss_vid = criterion_xent(outputs_vid, vids)
+                # xent_loss_vid = 0
                 xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
                 xent_loss = xent_loss_vid + xent_loss_vpid
             
@@ -298,8 +292,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
             else:
                 # embed()
-                # htri_loss = criterion_htri(features, vids)
-                htri_loss = 0
+                htri_loss = criterion_htri(features, vids)
+                # htri_loss = 0
             
             loss = args.lambda_xent * xent_loss
         optimizer.zero_grad()
@@ -309,9 +303,9 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         batch_time.update(time.time() - end)
 
         losses.update(loss.item(), vids.size(0))
-        # xent_losses_vid.update(xent_loss_vid.item(),vids.size(0))
+        xent_losses_vid.update(xent_loss_vid.item(),vids.size(0))
         xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
-        # htri_losses.update(htri_loss.item(),vids.size(0))
+        htri_losses.update(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'

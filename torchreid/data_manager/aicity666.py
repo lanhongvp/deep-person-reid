@@ -129,7 +129,7 @@ class aiCity666_vp(object):
         # vehicles: 333（train）+ 333（test）
         # images: 36953 (train) + 18290 (test) + 1052(query)
     """
-    dataset_dir = 'aiCity_vp'
+    dataset_dir = 'aiCity_vp_all'
 
     def __init__(self, root='../../lan_reid/data', **kwargs):
         self.dataset_dir = osp.join(root, self.dataset_dir)
