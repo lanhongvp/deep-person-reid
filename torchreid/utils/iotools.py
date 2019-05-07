@@ -83,39 +83,44 @@ def dict_value_slice(ori_dict,st,ed):
         slice_dict[vid] = tmp_name
     return slice_dict
 
-
+  
 def write_pickle_aicity(download_path):
     # write the aicity dataset to pickle file with vehicle id and viewpoint
     # 1: front 2: front-side 3:side 4:rear-side 5:rear
     if not os.path.isdir(download_path):
         print('please change the download_path')
 
-    train_label = download_path + '/train_label.csv'
-    train_label_vp = download_path + '/labels.txt'
+    train_label = download_path + '/imglist_b.txt'
+    train_label_vp = download_path + '/labels_b.txt'
     tnames = {}
     tnames_p = open('tnames_aic.pkl','wb')
+    # get the total count lines
+    count = 0
+    with open(train_label,'r') as f:
+        for index, line in enumerate(f):
+            count += 1
+    print('train num',count)
 
+    f1 = open(train_label,'r')
+    f2 = open(train_label_vp,'r')
     # for root, dirs, files in os.walk(train_path, topdown=True):
-    with open(train_label,'r') as f1,open(train_label_vp,'r') as f2:
-        for line1 in f1.readlines():
-            tname = line1.strip('\n').split(',')
-            vid = tname[0]
-            timg = tname[1] 
-            tnames[timg] = vid
-        idx = 1
-        for line2 in f2.readlines():
-            timg = str(idx).zfill(6)+'.jpg'
-            vp = line2
-            if timg in tnames.keys():
-                tnames[timg] += '_{}'.format(vp)
-            else:
-                continue
-            idx += 1
-        print(idx)
+    for i in range(count):
+        img_path = f1.readline()
+        # print(img_path)
+        img_name = img_path.strip('\n').split('/')[-1]
+        img_name = img_name.split('\\')[-1]
+        # print('img_name\n',img_name)
+        vid = img_name.split('_')[0]
+        # print('vid\n',vid)
+        img_name = img_name.split('_')[1]
+        # print('img_name\n',img_name)
+        vpid = f2.readline()
+        vid_vpid = vid+'_'+vpid
+        tnames[img_name] = vid_vpid
         pickle.dump(tnames,tnames_p)
-        tnames_p.close()
-        f1.close()
-        f2.close()
+    tnames_p.close()
+    f1.close()
+    f2.close()
 
 def write_pickle_veri(download_path):
     if not os.path.isdir(download_path):
@@ -189,3 +194,4 @@ def ori2dst_split(ori_dict,ori_path,save_path):
             if not os.path.isdir(dst_path):
                 os.mkdir(dst_path)
             copyfile(src_path, dst_path + '/'+tvid+'_'+timg)
+

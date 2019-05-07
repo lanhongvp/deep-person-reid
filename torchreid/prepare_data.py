@@ -4,8 +4,9 @@ import pickle
 from utils.iotools import *
 
 root_dir = '/home/lzhpc/home_lan/data'
+# root_dir = 'D:/0_ZJUAI/AICITY/AI_CITY/data'
 # You only need to change this line to your dataset download path
-download_path_aicity = root_dir+'/aiCity'
+download_path_aicity = root_dir+'/aiCity_s'
 # download_path_veri = root_dir+'/VeRi'
 save_path = root_dir+'/aiCity_vp'
 
