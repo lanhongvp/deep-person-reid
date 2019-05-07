@@ -37,7 +37,7 @@ class TripletLoss(nn.Module):
         # For each anchor, find the hardest positive and negative
         mask = targets.expand(n, n).eq(targets.expand(n, n).t())
         dist_ap, dist_an = [], []
-        embed()
+        # embed()
         for i in range(n):
             dist_ap.append(dist[i][mask[i]].max().unsqueeze(0))
             dist_an.append(dist[i][mask[i] == 0].min().unsqueeze(0))

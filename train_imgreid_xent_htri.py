@@ -265,7 +265,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
     losses = AverageMeter()
     batch_time = AverageMeter()
     data_time = AverageMeter()
-    xent_losses = AverageMeter()
+    xent_losses_vid = AverageMeter()
+    xent_losses_vpid = AverageMeter()
     htri_losses = AverageMeter()
 
     model.train()
@@ -288,7 +289,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             if isinstance(outputs_vid, tuple):
                 xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
             else:
-                xent_loss_vid = criterion_xent(outputs_vid, vids)
+                # xent_loss_vid = criterion_xent(outputs_vid, vids)
+                xent_loss_vid = 0
                 xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
                 xent_loss = xent_loss_vid + xent_loss_vpid
             
@@ -306,7 +308,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         batch_time.update(time.time() - end)
 
         losses.update(loss.item(), vids.size(0))
-        xent_losses.update(xent_loss.item(),vids.size(0))
+        # xent_losses_vid.update(xent_loss_vid.item(),vids.size(0))
+        xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
         htri_losses.update(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
@@ -314,13 +317,12 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
-                  'Xent vid Loss {xent_loss_vid:.4f}\t'
-                  'Xent vpid Loss {xent_loss_vpid:.4f}\t'
+                  'Xent Vid Loss {xent_loss_vid.val:.4f} ({xent_loss_vid.avg:.4f})\t'
+                  'Xent VPid Loss {xent_loss_vpid.val:.4f} ({xent_loss_vpid.avg:.4f})\t'
                   'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss=xent_losses, xent_loss_vid=xent_loss_vid,
-                   xent_loss_vpid=xent_loss_vpid, htri_loss=htri_losses))
+                   data_time=data_time, loss=losses, xent_loss_vid=xent_losses_vid,
+                   xent_loss_vpid=xent_losses_vpid, htri_loss=htri_losses))
         
         end = time.time()
 

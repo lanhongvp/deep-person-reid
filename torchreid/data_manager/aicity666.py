@@ -14,7 +14,7 @@ from scipy.io import loadmat
 import numpy as np
 import h5py
 from scipy.misc import imsave
-
+from IPython import embed
 from torchreid.utils.iotools import mkdir_if_missing, write_json, read_json
 
 class aiCity666_veri(object):
@@ -201,6 +201,7 @@ class aiCity666(object):
                     vid = vlabel[count]
                 dataset.append((img_path, vid,-1,vpid-1))
                 count = count + 1
+            # embed()
             num_imgs = len(dataset)
 
         elif not is_train and is_track:
