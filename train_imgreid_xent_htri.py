@@ -298,9 +298,10 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
             else:
                 # embed()
-                htri_loss = criterion_htri(features, vids)
+                # htri_loss = criterion_htri(features, vids)
+                htri_loss = 0
             
-            loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
+            loss = args.lambda_xent * xent_loss
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -310,7 +311,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         losses.update(loss.item(), vids.size(0))
         # xent_losses_vid.update(xent_loss_vid.item(),vids.size(0))
         xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
-        htri_losses.update(htri_loss.item(),vids.size(0))
+        # htri_losses.update(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
