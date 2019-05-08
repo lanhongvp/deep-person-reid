@@ -5,7 +5,7 @@ import torch
 
 def init_optim(optim, params, lr, weight_decay):
     if optim == 'adam':
-        return torch.optim.Adam(params, lr=lr, weight_decay=weight_decay)
+        return torch.optim.Adam([{'params':params,'initial_lr':lr}], lr=lr, weight_decay=weight_decay)
     elif optim == 'amsgrad':
         return torch.optim.Adam(params, lr=lr, weight_decay=weight_decay, amsgrad=True)
     elif optim == 'sgd':

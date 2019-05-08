@@ -11,7 +11,7 @@ __all__ = ['DenseNet121']
 
 
 class DenseNet121(nn.Module):
-    def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
+    def __init__(self, num_classes_vid, loss={'xent'}, **kwargs):
         super(DenseNet121, self).__init__()
         self.loss = loss
         densenet121 = torchvision.models.densenet121(pretrained=True)

@@ -10,13 +10,13 @@ import torchvision
 __all__ = ['ResNet18', 'ResNet50', 'ResNet101', 'ResNet50M']
 
 class ResNet18(nn.Module):
-    def __init__(self, num_classes_vid, num_classes_vpid, loss={'xent'}, **kwargs):
+    def __init__(self, num_classes_vid, loss={'xent'}, **kwargs):
         super(ResNet18, self).__init__()
         self.loss = loss
         resnet18 = torchvision.models.resnet18(pretrained=True)
         self.base = nn.Sequential(*list(resnet18.children())[:-2])
         self.classifier_vid = nn.Linear(512, num_classes_vid)
-        self.classifier_vpid = nn.Linear(512, num_classes_vpid)
+        # self.classifier_vpid = nn.Linear(512, num_classes_vpid)
         self.feat_dim = 512
 
     def forward(self, x):
@@ -26,7 +26,7 @@ class ResNet18(nn.Module):
         if not self.training:
             return f
         y_vid = self.classifier_vid(f)
-        y_vpid = self.classifier_vpid(f)
+        # y_vpid = self.classifier_vpid(f)
 
         if self.loss == {'xent'}:
             return y_vid, y_vpid

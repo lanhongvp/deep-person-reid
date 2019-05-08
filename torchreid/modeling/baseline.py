@@ -62,7 +62,7 @@ class Baseline(nn.Module):
                                block=Bottleneck,
                                layers=[3, 8, 36, 3])
             
-        elif model_name == 'se_resnet50':
+        elif model_name == 'seresnet50':
             self.base = SENet(block=SEResNetBottleneck, 
                               layers=[3, 4, 6, 3], 
                               groups=1, 
@@ -126,6 +126,7 @@ class Baseline(nn.Module):
                               last_stride=last_stride)
 
         if pretrain_choice == 'imagenet':
+            model_path = model_path + 'se_resnet50-ce0d4300.pth'
             self.base.load_param(model_path)
             print('Loading pretrained ImageNet model......')
 

@@ -14,8 +14,8 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
-from modeling import build_model
 
+from torchreid.modeling import build_model
 from torchreid import data_manager
 from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
 from torchreid import transforms as T
@@ -41,7 +41,7 @@ parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
 parser.add_argument('-d', '--dataset', type=str, default='aicity_raw',
                     choices=data_manager.get_names())
-parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_veri',
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity_veri',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -59,7 +59,7 @@ parser.add_argument('--cuhk03-classic-split', action='store_true',
 parser.add_argument('--use-metric-cuhk03', action='store_true',
                     help="whether to use cuhk03-metric (default: False)")
 # Optimization options
-parser.add_argument('--optim', type=str, default='Adam',
+parser.add_argument('--optim', type=str, default='adam',
                     help="optimization algorithm (see optimizers.py)")
 parser.add_argument('--max-epoch', default=60, type=int,
                     help="maximum epochs to run")
@@ -106,7 +106,7 @@ parser.add_argument('--print-freq', type=int, default=10,
                     help="print frequency")
 parser.add_argument('--seed', type=int, default=1,
                     help="manual seed")
-parser.add_argument('--resume', type=str, default='', metavar='PATH')
+parser.add_argument('--resume', type=str, default='/home/lzhpc/.torch/models/', metavar='PATH')
 parser.add_argument('--load-weights', type=str, default='',
                     help="load pretrained weights but ignores layers that don't match in size")
 parser.add_argument('--evaluate', action='store_true',
@@ -179,9 +179,8 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    # model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,
-    #                           loss={'xent', 'htri'})
-    model = build_model(args,dataset_m.num_train_vids)
+    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids,loss={'xent', 'htri'})
+    # model = build_model(args,dataset_m.num_train_vids)
     print("Model size: {:.3f} M".format(count_num_param(model)))
     # embed()
     if args.label_smooth:
@@ -191,8 +190,8 @@ def main():
         #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
     
-    optimizer = make_optimizer(args,model)
-    # optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
+    #optimizer = make_optimizer(args,model)
+    optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
     # scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
     scheduler = WarmupMultiStepLR(optimizer,args.stepsize,args.gamma,args.warmup_factor,

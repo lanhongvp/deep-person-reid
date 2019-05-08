@@ -16,7 +16,7 @@ from .inceptionresnetv2 import *
 
 
 __model_factory = {
-    'resnet18':ResNet18,
+#    'resnet18':ResNet18,
     'resnet50': ResNet50,
     'resnet101': ResNet101,
     'seresnet50': SEResNet50,

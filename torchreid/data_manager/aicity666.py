@@ -34,7 +34,7 @@ class aiCity666_veri(object):
         self.dataset_dir = osp.join(root, self.dataset_dir)
         self.dataset_dir = osp.abspath(self.dataset_dir)
         #embed()
-        self.train_dir = osp.join(self.dataset_dir, 'image_train_m')
+        self.train_dir = osp.join(self.dataset_dir, 'image_train_all')
         self._check_before_run()
 
         train, num_train_vids, num_train_imgs = self._process_dir(self.train_dir,is_train=True,relabel=True)

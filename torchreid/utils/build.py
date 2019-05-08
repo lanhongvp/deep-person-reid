@@ -20,7 +20,7 @@ def make_optimizer(cfg, model):
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
     if cfg.optim == 'sgd':
         optimizer = getattr(torch.optim, cfg.optim)(params, momentum=cfg.momentum)
-    elif cfg.optim == 'adam':
+    else:
         optimizer = getattr(torch.optim, 'Adam')(params)
     return optimizer
 
