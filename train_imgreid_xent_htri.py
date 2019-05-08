@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
+from modeling import build_model
 
 from torchreid import data_manager
 from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
@@ -40,7 +41,7 @@ parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
 parser.add_argument('-d', '--dataset', type=str, default='aicity_raw',
                     choices=data_manager.get_names())
-parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_vp',
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_veri',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -126,6 +127,11 @@ parser.add_argument('--exp',type=str,default='exp0',help='aicity txt result name
 parser.add_argument('--reranking',action= 'store_true', help= 'result re_ranking')
 parser.add_argument('--use_track_info',action='store_true',help='whether to use track info')
 parser.add_argument('--test_distance',type = str, default='global', help= 'test distance type')
+# Trick setting and bnneck
+parser.add_argument('--test_neck_feat',type = str, default='after')
+parser.add_argument('--model_pretrain_choice', type=str,default='imagenet')
+parser.add_argument('--model_last_stride', type=int,default=2)
+parser.add_argument('--model_neck', type=str,default='bnneck')
 
 args = parser.parse_args()
 
@@ -173,8 +179,9 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,
-                              loss={'xent', 'htri'})
+    # model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,
+    #                           loss={'xent', 'htri'})
+    model = build_model(args,dataset_m.num_train_vids)
     print("Model size: {:.3f} M".format(count_num_param(model)))
     # embed()
     if args.label_smooth:
@@ -184,8 +191,8 @@ def main():
         #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
     
-    # optimizer = make_optimizer(args,model)
-    optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
+    optimizer = make_optimizer(args,model)
+    # optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
     # scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
     scheduler = WarmupMultiStepLR(optimizer,args.stepsize,args.gamma,args.warmup_factor,
@@ -276,20 +283,19 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
     losses = AverageMeter()
     batch_time = AverageMeter()
     data_time = AverageMeter()
-    xent_losses_vid = AverageMeter()
-    xent_losses_vpid = AverageMeter()
+    xent_losses = AverageMeter()
     htri_losses = AverageMeter()
 
     model.train()
 
     end = time.time()
-    for batch_idx, (imgs, vids, _, vpids) in enumerate(trainloader):
+    for batch_idx, (imgs, vids, _) in enumerate(trainloader):
         data_time.update(time.time() - end)
         
         if use_gpu:
-            imgs, vids, vpids = imgs.cuda(), vids.cuda(), vpids.cuda()
+            imgs, vids = imgs.cuda(), vids.cuda(), vpids.cuda()
         
-        outputs_vid,outputs_vpid,features = model(imgs)
+        outputs_vid,features = model(imgs)
         # embed()
         if args.htri_only:
             if isinstance(features, tuple):
@@ -300,10 +306,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
             if isinstance(outputs_vid, tuple):
                 xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
             else:
-                xent_loss_vid = criterion_xent(outputs_vid, vids)
-                # xent_loss_vid = 0
-                xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
-                xent_loss = xent_loss_vid + args.lambda_xent_vpid * xent_loss_vpid
+                xent_loss = criterion_xent(outputs_vid, vids)
             
             if isinstance(features, tuple):
                 htri_loss = DeepSupervision(criterion_htri, features, vids)
@@ -320,8 +323,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         batch_time.update(time.time() - end)
 
         losses.update(loss.item(), vids.size(0))
-        xent_losses_vid.update(xent_loss_vid.item(),vids.size(0))
-        xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
+        xent_losses.update(xent_loss.item(),vids.size(0))
+        # xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
         htri_losses.update(htri_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
@@ -329,12 +332,10 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Xent Vid Loss {xent_loss_vid.val:.4f} ({xent_loss_vid.avg:.4f})\t'
-                  'Xent VPid Loss {xent_loss_vpid.val:.4f} ({xent_loss_vpid.avg:.4f})\t'
+                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
                   'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss_vid=xent_losses_vid,
-                   xent_loss_vpid=xent_losses_vpid, htri_loss=htri_losses))
+                   data_time=data_time, loss=losses, xent_loss=xent_losses,htri_loss=htri_losses))
         
         end = time.time()
 
