@@ -388,9 +388,9 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         gf = torch.cat(gf, 0)
         # g_vids = np.asarray(g_vids)
         # g_camids = np.asarray(g_camids)
-        gt_f = track_info_average(track_id,gf)
+        # gt_f = track_info_average(track_id,gf)
         print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
-        print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))
+        # print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))
     
     print("==> BatchTime(s)/BatchSize(img): {:.3f}/{}".format(batch_time.avg, args.test_batch))
 
