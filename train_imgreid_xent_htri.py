@@ -29,6 +29,7 @@ from torchreid.utils.test_CMC import track_info_average,get_track_id
 from torchreid.eval_metrics import evaluate_aicity,eval_aicity_track
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
+from torchreid.utils.lr_scheduler import WarmupMultiStepLR
 from IPython import embed
 
 
@@ -66,7 +67,7 @@ parser.add_argument('--train-batch', default=32, type=int,
                     help="train batch size")
 parser.add_argument('--test-batch', default=100, type=int,
                     help="test batch size")
-parser.add_argument('--lr', '--learning-rate', default=0.0003, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.00035, type=float,
                     help="initial learning rate")
 parser.add_argument('--stepsize', default=[20, 40], nargs='+', type=int,
                     help="stepsize to decay learning rate")
@@ -88,6 +89,10 @@ parser.add_argument('--lambda-htri', type=float, default=1,
                     help="weight to balance hard triplet loss")
 parser.add_argument('--label-smooth', action='store_true',
                     help="use label smoothing regularizer in cross entropy loss")
+# warm up factor
+parser.add_argument('-wf','--warmup_factor',type=float,default=1.0/3)
+parser.add_argument('-wi','--warmup_iters',type=int,default=500)
+parser.add_argument('-wm','--warmup_method',type=str,default='linear')
 # Architecture
 parser.add_argument('-a', '--arch', type=str, default='resnet50', choices=models.get_names())
 # Miscs
@@ -147,6 +152,7 @@ def main():
     print("Dataset merge {}".format(dataset_m))
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
+        T.RandomErasing(),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -175,8 +181,10 @@ def main():
     
     optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
-    scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
-
+    # scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
+    scheduler = WarmupMultiStepLR(optimizer,args.stepsize,args.gamma,args.warmup_factor,
+                                args.warmup_iters,args.warmup_method,args.start_eval)
+    
     if args.load_weights:
         # load pretrained weights but ignore layers that don't match in size
         if check_isfile(args.load_weights):
