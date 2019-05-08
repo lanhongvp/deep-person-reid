@@ -155,6 +155,7 @@ def eval_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0',vis_ranked_res=False
     aicity_results = pd.DataFrame(list(aicity_results.items()),columns=['query_ids','gallery_ids'])
     # embed()
     aicity_results = aicity_results.sort_values('query_ids')
+    # embed()
     _write2txt(aicity_results,exp)
     if vis_ranked_res:
         arr_aicity_results = np.array(aicity_reuslts)
@@ -182,7 +183,7 @@ def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k
         elif use_track_info:
             cnt = 0 
             for k in range(rank_k):
-                embed()
+                # embed()
                 test_rank_tmp += list(map(lambda t_id:(t_id,k+1),list(track_id[distmat_rank_k[k]])))
                 #embed()
                 cnt += len(list(track_id[distmat_rank_k[k]]))
@@ -204,7 +205,7 @@ def _write2txt(aicity_results,exp):
             idx_row = aicity_results.iloc[idx]['gallery_ids'][:100]
             # embed()
             for item in idx_row:
-                row_rank = str(item[0])
+                row_rank = str(item)
                 row_ranks.append(row_rank)
             sep_c = sep_c.join(row_ranks)
             # embed()

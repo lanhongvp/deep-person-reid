@@ -208,7 +208,7 @@ class aiCity666_raw(object):
         query, num_query_vids, num_query_imgs = self._process_dir(self.query_dir,is_train=False,is_track=False)
         query_nt, num_query_vids, num_query_imgs = self._process_dir(self.query_dir,is_train=False,is_track=False,use_cnt=True)
         gallery, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False,is_track=True)
-        gallery_nt, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False,is_track=False)
+        gallery_nt, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False,is_track=False,use_cnt=True)
         # num_total_vids = num_train_vids + num_query_vids
         num_total_vids = num_train_vids
         num_total_imgs = num_train_imgs + num_query_imgs + num_gallery_imgs
