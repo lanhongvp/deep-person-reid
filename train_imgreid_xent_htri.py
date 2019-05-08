@@ -19,6 +19,7 @@ from torchreid.modeling import build_model
 from torchreid import data_manager
 from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
 from torchreid import transforms as T
+from torchreid.transforms import RandomErasing
 from torchreid import models
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
 from torchreid.utils.iotools import save_checkpoint, check_isfile
@@ -163,7 +164,7 @@ def main():
     print("Dataset merge {}".format(dataset_m))
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
-        T.RandomErasing(),
+        #RandomErasing(),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -292,7 +293,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         data_time.update(time.time() - end)
         
         if use_gpu:
-            imgs, vids = imgs.cuda(), vids.cuda(), vpids.cuda()
+            imgs, vids = imgs.cuda(), vids.cuda()
         
         outputs_vid,features = model(imgs)
         # embed()
