@@ -100,7 +100,7 @@ parser.add_argument('-wf','--warmup_factor',type=float,default=1.0/3)
 parser.add_argument('-wi','--warmup_iters',type=int,default=500)
 parser.add_argument('-wm','--warmup_method',type=str,default='linear')
 # Architecture
-parser.add_argument('-a', '--arch', type=str, default='resnet50', choices=models.get_names())
+parser.add_argument('-a', '--arch', type=str, default='se_resnext101')
 # Miscs
 parser.add_argument('--print-freq', type=int, default=10,
                     help="print frequency")
