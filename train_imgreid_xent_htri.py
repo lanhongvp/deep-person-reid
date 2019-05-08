@@ -82,7 +82,7 @@ parser.add_argument('--htri-only', action='store_true', default=False,
                     help="if this is True, only htri loss is used in training")
 parser.add_argument('--lambda-xent', type=float, default=1,
                     help="weight to balance cross entropy loss")
-parser.add_argument('--lambda-xent-vpid', type=float, default=0.1,
+parser.add_argument('--lambda-xent-vpid', type=float, default=0.5,
                     help="weight to balance cross entropy loss")
 parser.add_argument('--lambda-htri', type=float, default=1,
                     help="weight to balance hard triplet loss")
