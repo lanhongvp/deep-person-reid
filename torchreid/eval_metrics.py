@@ -141,7 +141,7 @@ def eval_market1501(distmat, q_vids, g_vids, q_camids, g_camids, max_rank):
 
     return all_cmc, mAP
 
-def evaluate_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0',vis_ranked_res=False):
+def eval_aicity(distmat,q_ids,g_ids,max_rank=100,exp='exp0',vis_ranked_res=False):
     q_num = distmat.shape[0]
     g_num = distmat.shape[1]
     aicity_results = {}

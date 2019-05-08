@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 
 from torchreid import data_manager
-from torchreid.dataset_loader import ImageDataset,ImageDatasetNo
+from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
 from torchreid import transforms as T
 from torchreid import models
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
@@ -26,7 +26,7 @@ from torchreid.utils.logger import Logger
 from torchreid.utils.torchtools import count_num_param
 from torchreid.utils.reidtools import visualize_ranked_results
 from torchreid.utils.test_CMC import track_info_average,get_track_id
-from torchreid.eval_metrics import evaluate_aicity,eval_aicity_track
+from torchreid.eval_metrics import eval_aicity,eval_aicity_track
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
 from IPython import embed
@@ -148,13 +148,7 @@ def main():
         cuhk03_labeled=args.cuhk03_labeled, cuhk03_classic_split=args.cuhk03_classic_split,
     )
 
-    print("Dataset merge {}".format(dataset_m))
-    transform_train = T.Compose([
-        T.Random2DTranslation(args.height, args.width),
-        T.RandomHorizontalFlip(),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    print("Dataset merge for train {}".format(dataset_m))
 
     transform_test = T.Compose([
         T.Resize((args.height, args.width)),
@@ -164,21 +158,20 @@ def main():
 
     pin_memory = True if use_gpu else False
 
-    trainloader = DataLoader(
-        ImageDataset(dataset_m.train, transform=transform_train),
-        sampler=RandomIdentitySampler(dataset_m.train, args.train_batch, args.num_instances),
-        batch_size=args.train_batch, num_workers=args.workers,
-        pin_memory=pin_memory, drop_last=True,
-    )
-
     queryloader = DataLoader(
-        ImageDatasetNo(dataset.query, transform=transform_test),
+        ImageDatasetNoCid(dataset.query, transform=transform_test),
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
 
     galleryloader = DataLoader(
-        ImageDatasetNo(dataset.gallery, transform=transform_test),
+        ImageDatasetNoCidVid(dataset.gallery, transform=transform_test),
+        batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
+        pin_memory=pin_memory, drop_last=False,
+    )
+    
+    galleryloader_nt = DataLoader(
+        ImageDatasetNoCid(dataset.gallery_nt, transform=transform_test),
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
@@ -227,7 +220,7 @@ def main():
                            dataset_q=dataset.query, dataset_g=dataset.gallery, 
                            track_id=g_track_id, return_distmat=True)    
         else:
-            distmat = test(model, queryloader, galleryloader, use_gpu, return_distmat=True)
+            distmat = test(model, queryloader, galleryloader_nt, use_gpu, return_distmat=True)
         if args.vis_ranked_res:
             visualize_ranked_results(
                 distmat, dataset,
@@ -235,104 +228,6 @@ def main():
                 topk=20,
             )
         return
-
-    start_time = time.time()
-    train_time = 0
-    best_rank1 = -np.inf
-    best_epoch = 0
-    print("==> Start training")
-
-    for epoch in range(args.start_epoch, args.max_epoch):
-        start_train_time = time.time()
-        train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, use_gpu)
-        train_time += round(time.time() - start_train_time)
-        
-        scheduler.step()
-        
-        if (epoch + 1) > args.start_eval and args.eval_step > 0 and (epoch + 1) % args.eval_step == 0 or (epoch + 1) == args.max_epoch:
-            # print("==> Test")
-            # rank1 = test(model, queryloader, galleryloader, use_gpu)
-            # is_best = rank1 > best_rank1
-            
-            # if is_best:
-            #     best_rank1 = rank1
-            #     best_epoch = epoch + 1
-            is_best = True
-
-            if use_gpu:
-                state_dict = model.module.state_dict()
-            else:
-                state_dict = model.state_dict()
-            
-            save_checkpoint({
-                'state_dict': state_dict,
-                'epoch': epoch,
-            }, is_best, osp.join(args.save_dir, 'checkpoint_ep' + str(epoch + 1) + '.pth.tar'))
-
-    # print("==> Best Rank-1 {:.1%}, achieved at epoch {}".format(best_rank1, best_epoch))
-
-    elapsed = round(time.time() - start_time)
-    elapsed = str(datetime.timedelta(seconds=elapsed))
-    train_time = str(datetime.timedelta(seconds=train_time))
-    print("Finished. Total elapsed time (h:m:s): {}. Training time (h:m:s): {}.".format(elapsed, train_time))
-
-
-def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, use_gpu):
-    losses = AverageMeter()
-    batch_time = AverageMeter()
-    data_time = AverageMeter()
-    xent_losses = AverageMeter()
-    htri_losses = AverageMeter()
-
-    model.train()
-
-    end = time.time()
-    for batch_idx, (imgs, vids, _, vpids) in enumerate(trainloader):
-        data_time.update(time.time() - end)
-        
-        if use_gpu:
-            imgs, vids, vpids = imgs.cuda(), vids.cuda(), vpids.cuda()
-        
-        outputs, features = model(imgs)
-        if args.htri_only:
-            if isinstance(features, tuple):
-                loss = DeepSupervision(criterion_htri, features, vids)
-            else:
-                loss = criterion_htri(features, vids)
-        else:
-            if isinstance(outputs, tuple):
-                xent_loss = DeepSupervision(criterion_xent, outputs_vid, vids)
-            else:
-                xent_loss_vid = criterion_xent(outputs_vid, vids)
-                xent_loss_vpid = criterion_xent(outputs_vpid, vpids)
-            
-            if isinstance(features, tuple):
-                htri_loss = DeepSupervision(criterion_htri, features, vids)
-            else:
-                htri_loss = criterion_htri(features, vids)
-            
-            loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        batch_time.update(time.time() - end)
-
-        losses.update(loss.item(), vids.size(0))
-        xent_losses.update(xent_loss.item(),vids.size(0))
-        htri_losses.update(htri_loss.item(),vids.size(0))
-
-        if (batch_idx + 1) % args.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
-                  'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
-                   epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss=xent_losses, htri_loss=htri_losses))
-        
-        end = time.time()
 
 
 def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],dataset_q=None,dataset_g=None, track_id=None,return_distmat=False):
@@ -348,7 +243,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
                 q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
-        for batch_idx, imgs in enumerate(queryloader):
+        for batch_idx, (imgs,vids) in enumerate(queryloader):
             if use_gpu:
                 imgs = imgs.cuda()
 
@@ -358,10 +253,10 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
 
             features = features.data.cpu()
             qf.append(features)
-            # q_vids.extend(vids)
+            q_vids.extend(vids)
             # q_camids.extend(camids)
         qf = torch.cat(qf, 0)
-        # q_vids = np.asarray(q_vids)
+        q_vids = np.asarray(q_vids)
         # q_camids = np.asarray(q_camids)
 
         print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
@@ -373,24 +268,42 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
                 g_img = int(dataset_g[g_idx].split('/')[-1].strip('.jpg'))
                 g_imgs.append(g_img)
 
-        for batch_idx, imgs in enumerate(galleryloader):
-            if use_gpu:
-                imgs = imgs.cuda()
-            
-            end = time.time()
-            features = model(imgs)
-            batch_time.update(time.time() - end)
+            for batch_idx, imgs in enumerate(galleryloader):
+                if use_gpu:
+                    imgs = imgs.cuda()
+                
+                end = time.time()
+                features = model(imgs)
+                batch_time.update(time.time() - end)
 
-            features = features.data.cpu()
-            gf.append(features)
-            # g_vids.extend(vids)
-            # g_camids.extend(camids)
-        gf = torch.cat(gf, 0)
-        # g_vids = np.asarray(g_vids)
-        # g_camids = np.asarray(g_camids)
-        # gt_f = track_info_average(track_id,gf)
-        print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
-        # print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1)))
+                features = features.data.cpu()
+                gf.append(features)
+                # g_vids.extend(vids)
+                # g_camids.extend(camids)
+            gf = torch.cat(gf, 0)
+            # g_vids = np.asarray(g_vids)
+            # g_camids = np.asarray(g_camids)
+            gt_f = track_info_average(track_id,gf)
+            print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
+            print("Extracted features for gallery track set, obtained {}-by-{} matrix".format(gt_f.size(0), gt_f.size(1))
+
+        elif not args.use_track_info:
+            for batch_idx, (imgs,vids) in enumerate(galleryloader):
+                if use_gpu:
+                    imgs = imgs.cuda()
+                
+                end = time.time()
+                features = model(imgs)
+                batch_time.update(time.time() - end)
+
+                features = features.data.cpu()
+                gf.append(features)
+                g_vids.extend(vids)
+                # g_camids.extend(camids)
+            gf = torch.cat(gf, 0)
+            g_vids = np.asarray(g_vids)
+            # g_camids = np.asarray(g_camids)
+            print("Extracted features for gallery set, obtained {}-by-{} matrix".format(gf.size(0), gf.size(1)))
     
     print("==> BatchTime(s)/BatchSize(img): {:.3f}/{}".format(batch_time.avg, args.test_batch))
 
@@ -413,15 +326,10 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         eval_aicity_track(distmat,q_imgs,g_imgs,track_id,
                           use_track_info=args.use_track_info,exp=args.exp)
     else:
-        evaluate_aicity(distmat, q_vids, g_vids,exp=args.exp)
+        eval_aicity(distmat, q_vids, g_vids,exp=args.exp)
 
     print("Results ----------")
-    # print("mAP: {:.1%}".format(mAP))
-    # print("CMC curve")
-    # for r in ranks:
-    #    print("Rank-{:<3}: {:.1%}".format(r, cmc[r-1]))
-    #cprint("------------------")
-
+    
     if return_distmat:
         return distmat
     # return cmc[0]

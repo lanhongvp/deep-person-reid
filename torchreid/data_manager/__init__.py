@@ -7,7 +7,8 @@ from .aicity666 import aiCity666_vp
 
 __imgreid_factory = {
     'aicity666_vp':aiCity666_vp,
-    'aicity_raw':aiCity666_raw
+    'aicity_raw':aiCity666_raw,
+    'aicity_veri':aiCity666_veri
 }
 
 
