@@ -30,6 +30,7 @@ from torchreid.eval_metrics import eval_aicity,eval_aicity_track
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
 from torchreid.utils.lr_scheduler import WarmupMultiStepLR
+from torchreid.utils.build import make_optimizer
 from IPython import embed
 
 
@@ -75,6 +76,10 @@ parser.add_argument('--gamma', default=0.1, type=float,
                     help="learning rate decay")
 parser.add_argument('--weight-decay', default=5e-04, type=float,
                     help="weight decay (default: 5e-04)")
+parser.add_argument('--bias-lr-factor', default=2, type=int,
+                    help="bias-lr-factor (default: 2)")
+parser.add_argument('--momentum', default=0.9, type=float,
+                    help="momentum (default: 0.9)")
 parser.add_argument('--margin', type=float, default=0.3,
                     help="margin for triplet loss")
 parser.add_argument('--num-instances', type=int, default=4,
@@ -179,7 +184,8 @@ def main():
         #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
     
-    optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
+    optimizer = make_optimizer(args,model)
+    # optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
     # scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
     scheduler = WarmupMultiStepLR(optimizer,args.stepsize,args.gamma,args.warmup_factor,
