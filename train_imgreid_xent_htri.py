@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 
 from torchreid import data_manager
-from torchreid.dataset_loader import ImageDataset,ImageDatasetNo,ImageDataset_vp
+from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
 from torchreid import transforms as T
 from torchreid import models
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
@@ -26,7 +26,7 @@ from torchreid.utils.logger import Logger
 from torchreid.utils.torchtools import count_num_param
 from torchreid.utils.reidtools import visualize_ranked_results
 from torchreid.utils.test_CMC import track_info_average,get_track_id
-from torchreid.eval_metrics import evaluate_aicity,eval_aicity_track
+from torchreid.eval_metrics import eval_aicity,eval_aicity_track
 from torchreid.samplers import RandomIdentitySampler
 from torchreid.optimizers import init_optim
 from torchreid.utils.lr_scheduler import WarmupMultiStepLR
@@ -161,7 +161,7 @@ def main():
     pin_memory = True if use_gpu else False
 
     trainloader = DataLoader(
-        ImageDataset_vp(dataset_m.train, transform=transform_train),
+        ImageDataset(dataset_m.train, transform=transform_train),
         sampler=RandomIdentitySampler(dataset_m.train, args.train_batch, args.num_instances),
         batch_size=args.train_batch, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=True,
