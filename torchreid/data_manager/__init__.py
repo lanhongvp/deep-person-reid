@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from .aicity666 import aiCity666_raw
 from .aicity666 import aiCity666_vp 
+from .aicity666 import aiCity666_veri 
 
 __imgreid_factory = {
     'aicity666_vp':aiCity666_vp,
