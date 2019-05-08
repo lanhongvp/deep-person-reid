@@ -174,7 +174,8 @@ def main():
     criterion_htri = TripletLoss(margin=args.margin)
     
     optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
-    scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
+    # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
+    scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
 
     if args.load_weights:
         # load pretrained weights but ignore layers that don't match in size
