@@ -206,6 +206,7 @@ class aiCity666_raw(object):
 
         train, num_train_vids, num_train_imgs = self._process_dir(self.train_dir,is_train=True,relabel=True)
         query, num_query_vids, num_query_imgs = self._process_dir(self.query_dir,is_train=False,is_track=False)
+        query_nt, num_query_vids, num_query_imgs = self._process_dir(self.query_dir,is_train=False,is_track=False,use_cnt=True)
         gallery, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False,is_track=True)
         gallery_nt, num_gallery_vids, num_gallery_imgs = self._process_dir(self.gallery_dir,is_train=False,is_track=False)
         # num_total_vids = num_train_vids + num_query_vids
@@ -226,6 +227,7 @@ class aiCity666_raw(object):
 
         self.train = train
         self.query = query
+        self.query_nt = query_nt
         self.gallery = gallery
         self.gallery_nt = gallery_nt
 
@@ -254,7 +256,7 @@ class aiCity666_raw(object):
 
         return label,num_id
 
-    def _process_dir(self,dir_path, is_train=True,relabel=False,is_track=False):
+    def _process_dir(self,dir_path, is_train=True,relabel=False,is_track=False,use_cnt=False):
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))
         test_track_dir = self.dataset_dir + '/test_track.txt'
 
@@ -287,13 +289,21 @@ class aiCity666_raw(object):
             num_vids = -1
             num_imgs = len(dataset)
             
-        elif not is_train and not is_track:
+        elif not is_train and not is_track and use_cnt:
             dataset = []
             count = 1
             for img_path in img_paths:
                 # vid = int(img_path.strip('.jpg').split('/')[-1])
                 dataset.append((img_path,count))
                 count = count + 1
+            num_imgs = len(dataset)
+            num_vids = -1
+        elif not is_train and not is_track and not use_cnt:
+            dataset = []
+            
+            for img_path in img_paths:
+                # vid = int(img_path.strip('.jpg').split('/')[-1])
+                dataset.append(img_path)
             num_imgs = len(dataset)
             num_vids = -1
         #embed()

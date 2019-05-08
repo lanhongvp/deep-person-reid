@@ -163,6 +163,12 @@ def main():
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
+    
+    queryloader_nt = DataLoader(
+        ImageDatasetNoCid(dataset.query_nt, transform=transform_test),
+        batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
+        pin_memory=pin_memory, drop_last=False,
+    )
 
     galleryloader = DataLoader(
         ImageDatasetNoCidVid(dataset.gallery, transform=transform_test),
@@ -243,24 +249,41 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
                 q_img = int(dataset_q[q_idx].split('/')[-1].strip('.jpg'))
                 q_imgs.append(q_img)
 
-        for batch_idx, (imgs,vids) in enumerate(queryloader):
-            if use_gpu:
-                imgs = imgs.cuda()
+            for batch_idx, imgs in enumerate(queryloader):
+                if use_gpu:
+                    imgs = imgs.cuda()
 
-            end = time.time()
-            features = model(imgs)
-            batch_time.update(time.time() - end)
+                end = time.time()
+                features = model(imgs)
+                batch_time.update(time.time() - end)
 
-            features = features.data.cpu()
-            qf.append(features)
-            q_vids.extend(vids)
-            # q_camids.extend(camids)
-        qf = torch.cat(qf, 0)
-        q_vids = np.asarray(q_vids)
-        # q_camids = np.asarray(q_camids)
+                features = features.data.cpu()
+                qf.append(features)
+                # q_vids.extend(vids)
+                # q_camids.extend(camids)
+            qf = torch.cat(qf, 0)
+            # q_vids = np.asarray(q_vids)
+            # q_camids = np.asarray(q_camids)
+            print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
+        
+        elif not args.use_track_info:
+            for batch_idx, (imgs,vids) in enumerate(queryloader_nt):
+                if use_gpu:
+                    imgs = imgs.cuda()
 
-        print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
+                end = time.time()
+                features = model(imgs)
+                batch_time.update(time.time() - end)
 
+                features = features.data.cpu()
+                qf.append(features)
+                q_vids.extend(vids)
+                # q_camids.extend(camids)
+            qf = torch.cat(qf, 0)
+            q_vids = np.asarray(q_vids)
+            # q_camids = np.asarray(q_camids)
+            print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
+        
         gf, g_imgs = [], []
 
         if args.use_track_info:
