@@ -58,7 +58,7 @@ parser.add_argument('--cuhk03-classic-split', action='store_true',
 parser.add_argument('--use-metric-cuhk03', action='store_true',
                     help="whether to use cuhk03-metric (default: False)")
 # Optimization options
-parser.add_argument('--optim', type=str, default='adam',
+parser.add_argument('--optim', type=str, default='Adam',
                     help="optimization algorithm (see optimizers.py)")
 parser.add_argument('--max-epoch', default=60, type=int,
                     help="maximum epochs to run")
@@ -184,8 +184,8 @@ def main():
         #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
     
-    optimizer = make_optimizer(args,model)
-    # optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
+    # optimizer = make_optimizer(args,model)
+    optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
     # scheduler = lr_scheduler.ExponentialLR(optimizer,gamma=args.gamma)
     scheduler = WarmupMultiStepLR(optimizer,args.stepsize,args.gamma,args.warmup_factor,

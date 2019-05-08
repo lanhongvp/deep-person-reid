@@ -18,10 +18,10 @@ def make_optimizer(cfg, model):
             lr = cfg.lr * cfg.bias_lr_factor
             weight_decay = cfg.weight_decay
         params += [{"params": [value], "lr": lr, "weight_decay": weight_decay}]
-    if cfg.optim == 'SGD':
+    if cfg.optim == 'sgd':
         optimizer = getattr(torch.optim, cfg.optim)(params, momentum=cfg.momentum)
-    else:
-        optimizer = getattr(torch.optim, cfg.optim)(params)
+    elif cfg.optim == 'adam':
+        optimizer = getattr(torch.optim, 'Adam')(params)
     return optimizer
 
 
