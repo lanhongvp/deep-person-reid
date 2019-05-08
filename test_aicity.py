@@ -159,7 +159,7 @@ def main():
     pin_memory = True if use_gpu else False
 
     queryloader = DataLoader(
-        ImageDatasetNoCid(dataset.query, transform=transform_test),
+        ImageDatasetNoCidVid(dataset.query, transform=transform_test),
         batch_size=args.test_batch, shuffle=False, num_workers=args.workers,
         pin_memory=pin_memory, drop_last=False,
     )
@@ -226,7 +226,7 @@ def main():
                            dataset_q=dataset.query, dataset_g=dataset.gallery, 
                            track_id=g_track_id, return_distmat=True)    
         else:
-            distmat = test(model, queryloader, galleryloader_nt, use_gpu, return_distmat=True)
+            distmat = test(model, queryloader_nt, galleryloader_nt, use_gpu, return_distmat=True)
         if args.vis_ranked_res:
             visualize_ranked_results(
                 distmat, dataset,
@@ -242,7 +242,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
     model.eval()
 
     with torch.no_grad():
-        qf, q_imgs = [], []
+        qf, q_imgs, q_vids = [], [], []
         if args.use_track_info:
             for q_idx in range(len(dataset_q)):
                 # embed()
@@ -267,7 +267,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
             print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
         
         elif not args.use_track_info:
-            for batch_idx, (imgs,vids) in enumerate(queryloader_nt):
+            for batch_idx, (imgs,vids) in enumerate(queryloader):
                 if use_gpu:
                     imgs = imgs.cuda()
 
@@ -284,7 +284,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
             # q_camids = np.asarray(q_camids)
             print("Extracted features for query set, obtained {}-by-{} matrix".format(qf.size(0), qf.size(1)))
         
-        gf, g_imgs = [], []
+        gf, g_imgs, g_vids = [], [], []
 
         if args.use_track_info:
             for g_idx in range(len(dataset_g)):

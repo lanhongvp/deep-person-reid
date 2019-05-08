@@ -182,6 +182,7 @@ def eval_aicity_track(distmat,q_imgs,g_imgs,track_id,use_track_info=False,rank_k
         elif use_track_info:
             cnt = 0 
             for k in range(rank_k):
+                embed()
                 test_rank_tmp += list(map(lambda t_id:(t_id,k+1),list(track_id[distmat_rank_k[k]])))
                 #embed()
                 cnt += len(list(track_id[distmat_rank_k[k]]))
