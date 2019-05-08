@@ -36,9 +36,9 @@ parser = argparse.ArgumentParser(description='Train image model with cross entro
 # Datasets
 parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
-parser.add_argument('-d', '--dataset', type=str, default='aicity_test',
+parser.add_argument('-d', '--dataset', type=str, default='aicity_raw',
                     choices=data_manager.get_names())
-parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666',
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_vp',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -184,7 +184,7 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes_vid=dataset.num_train_vids, num_classes_vpid=dataset.num_train_vpids,loss={'xent', 'htri'})
+    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,loss={'xent', 'htri'})
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
