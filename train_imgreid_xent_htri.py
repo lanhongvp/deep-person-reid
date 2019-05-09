@@ -164,10 +164,10 @@ def main():
     print("Dataset merge {}".format(dataset_m))
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
-        RandomErasing(),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        RandomErasing(),
     ])
 
     pin_memory = True if use_gpu else False
@@ -181,8 +181,8 @@ def main():
 
     print("Initializing model: {}".format(args.arch))
     # add bnneck with model
-    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, args.model_neck, args.test_neck_feat)
-    # model = build_model(args,dataset_m.num_train_vids)
+    # model = models.init_model(name=args.arch,num_classes_vid=dataset_m.num_train_vids,neck=args.model_neck,neck_feat=args.test_neck_feat)
+    model = build_model(args,dataset_m.num_train_vids)
     print("Model size: {:.3f} M".format(count_num_param(model)))
     # embed()
     if args.label_smooth:
