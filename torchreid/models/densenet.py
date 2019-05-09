@@ -30,8 +30,8 @@ class DenseNet121(nn.Module):
 #        y_vpid = self.classifier_vpid(f)
 
         if self.loss == {'xent'}:
-            return y_vid, y_vpid
+            return y_vid,
         elif self.loss == {'xent', 'htri'}:
-            return y_vid, y_vpid, f
+            return y_vid, f
         else:
             raise KeyError("Unsupported loss: {}".format(self.loss))

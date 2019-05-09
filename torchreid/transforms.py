@@ -6,7 +6,7 @@ from torchvision.transforms import *
 from PIL import Image
 import random
 import numpy as np
-from IPython import embed
+import math
 
 class Random2DTranslation(object):
     """
@@ -28,6 +28,7 @@ class Random2DTranslation(object):
         Args:
         - img (PIL Image): Image to be cropped.
         """
+        # print('size 0',img.size)
         if random.uniform(0, 1) > self.p:
             return img.resize((self.width, self.height), self.interpolation)
         
@@ -67,6 +68,7 @@ class RandomErasing(object):
 
         for attempt in range(100):
             # embed()
+            # print('size',img.size)
             area = img.size()[1] * img.size()[2]
 
             target_area = random.uniform(self.sl, self.sh) * area
