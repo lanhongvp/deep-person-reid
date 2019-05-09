@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import torchvision
-
+from IPython import embed
 
 __all__ = ['DenseNet121']
 
@@ -35,10 +35,10 @@ def weights_init_classifier(m):
 class DenseNet121(nn.Module):
     def __init__(self, num_classes_vid, neck,neck_feat,**kwargs):
         super(DenseNet121, self).__init__()
-        self.loss = loss
+        # self.loss = loss
         densenet121 = torchvision.models.densenet121(pretrained=True)
         self.base = densenet121.features
-        # self.gap = nn.AdaptiveAvgPool2d(1)
+        self.gap = nn.AdaptiveAvgPool2d(1)
         self.num_classes = num_classes_vid
         self.neck = neck
         self.neck_feat = neck_feat
@@ -57,8 +57,10 @@ class DenseNet121(nn.Module):
 
     def forward(self, x):
         x = self.base(x)
-        global_feat = F.avg_pool2d(x, x.size()[2:])
-        global_feat = x.view(x.size(0), -1)
+        # global_feat = F.avg_pool2d(x, x.size()[2:])
+        global_feat = self.gap(x)
+        global_feat = global_feat.view(global_feat.size(0), -1)
+        # embed()
         if self.neck == 'no':
             feat = global_feat
         elif self.neck == 'bnneck':
@@ -66,6 +68,7 @@ class DenseNet121(nn.Module):
 
         if self.training:
             cls_score = self.classifier(feat)
+            # embed()
             return cls_score, global_feat  # global feature for triplet loss
         else:
             if self.neck_feat == 'after':
