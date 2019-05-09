@@ -183,8 +183,8 @@ def main():
 
     print("Initializing model: {}".format(args.arch))
     # add bnneck with model
-    # model = models.init_model(name=args.arch,num_classes_vid=dataset_m.num_train_vids,neck=args.model_neck,neck_feat=args.test_neck_feat)
-    model = build_model(args,dataset_m.num_train_vids)
+    model = models.init_model(name=args.arch,num_classes_vid=dataset_m.num_train_vids,neck=args.model_neck,neck_feat=args.test_neck_feat)
+    # model = build_model(args,dataset_m.num_train_vids)
     print("Model size: {:.3f} M".format(count_num_param(model)))
     # embed()
     if args.label_smooth:
