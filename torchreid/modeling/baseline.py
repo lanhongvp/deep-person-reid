@@ -134,6 +134,8 @@ class Baseline(nn.Module):
                 model_path = model_path + 'se_resnet50-ce0d4300.pth'
             if model_name == 'se_resnext101':
                 model_path = model_path + 'se_resnext101_32x4d-3b2fe3d8.pth'
+            if model_name == 'resnet50':
+                model_path = model_path + 'resnet50-19c8e357.pth'
             self.base.load_param(model_path)
             print('Loading pretrained ImageNet model......')
 

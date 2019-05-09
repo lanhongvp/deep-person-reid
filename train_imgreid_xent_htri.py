@@ -101,7 +101,7 @@ parser.add_argument('-wf','--warmup_factor',type=float,default=1.0/3)
 parser.add_argument('-wi','--warmup_iters',type=int,default=500)
 parser.add_argument('-wm','--warmup_method',type=str,default='linear')
 # Architecture
-parser.add_argument('-a', '--arch', type=str, default='se_resnext101')
+parser.add_argument('-a', '--arch', type=str, default='se_resnet50')
 # Miscs
 parser.add_argument('--print-freq', type=int, default=10,
                     help="print frequency")
@@ -180,8 +180,8 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids,loss={'xent', 'htri'})
-    # model = build_model(args,dataset_m.num_train_vids)
+    # model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids,loss={'xent', 'htri'})
+    model = build_model(args,dataset_m.num_train_vids)
     print("Model size: {:.3f} M".format(count_num_param(model)))
     # embed()
     if args.label_smooth:
