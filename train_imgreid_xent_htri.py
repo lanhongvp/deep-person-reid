@@ -21,7 +21,7 @@ from torchreid.dataset_loader import ImageDataset
 from torchreid import transforms as T
 from torchreid.transforms import RandomErasing
 from torchreid import models
-from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
+from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision, CenterLoss
 from torchreid.utils.iotools import save_checkpoint, check_isfile
 from torchreid.utils.avgmeter import AverageMeter
 from torchreid.utils.logger import Logger
@@ -93,6 +93,8 @@ parser.add_argument('--lambda-xent', type=float, default=1,
 parser.add_argument('--lambda-xent-vpid', type=float, default=0.5,
                     help="weight to balance cross entropy loss")
 parser.add_argument('--lambda-htri', type=float, default=1,
+                    help="weight to balance hard triplet loss")
+parser.add_argument('--lambda-centor', type=float, default=0.0005,
                     help="weight to balance hard triplet loss")
 parser.add_argument('--label-smooth', action='store_true',
                     help="use label smoothing regularizer in cross entropy loss")
@@ -191,7 +193,10 @@ def main():
         criterion_xent = nn.CrossEntropyLoss()
         #criterion_xent = nn.CrossEntropyLoss()
     criterion_htri = TripletLoss(margin=args.margin)
-    
+    if args.arch == 'densenet121':
+        criterion_centor = CenterLoss(num_classes=dataset_m.num_train_vids,feat_dim=1024)
+    else:
+        criterion_centor = CenterLoss(num_classes=dataset_m.num_train_vids)
     #optimizer = make_optimizer(args,model)
     optimizer = init_optim(args.optim, model.parameters(), args.lr, args.weight_decay)
     # scheduler = lr_scheduler.MultiStepLR(optimizer, milestones=args.stepsize, gamma=args.gamma)
@@ -286,6 +291,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
     data_time = AverageMeter()
     xent_losses = AverageMeter()
     htri_losses = AverageMeter()
+    centor_losses = AverageMeter()
 
     model.train()
 
@@ -315,8 +321,8 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                 # embed()
                 htri_loss = criterion_htri(features, vids)
                 # htri_loss = 0
-            
-            loss = args.lambda_xent * xent_loss + args.lambda_htri * htri_loss
+            center_loss = criterion_centor(features, vids)
+            loss = args.lambda_xent*xent_loss + args.lambda_htri*htri_loss + args.lambda_centor*center_loss 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -327,6 +333,7 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
         xent_losses.update(xent_loss.item(),vids.size(0))
         # xent_losses_vpid.update(xent_loss_vpid.item(),vpids.size(0))
         htri_losses.update(htri_loss.item(),vids.size(0))
+        centor_losses.update(center_loss.item(),vids.size(0))
 
         if (batch_idx + 1) % args.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
@@ -334,9 +341,11 @@ def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, 
                   'Data {data_time.val:.4f} ({data_time.avg:.4f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Xent Loss {xent_loss.val:.4f} ({xent_loss.avg:.4f})\t'
-                  'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'.format(
+                  'Htri Loss {htri_loss.val:.4f} ({htri_loss.avg:.4f})\t'
+                  'Cent Loss {cent_loss.val:.4f} ({cent_loss.avg:.4f})\t'.format(
                    epoch + 1, batch_idx + 1, len(trainloader), batch_time=batch_time,
-                   data_time=data_time, loss=losses, xent_loss=xent_losses,htri_loss=htri_losses))
+                   data_time=data_time, loss=losses, xent_loss=xent_losses,
+                   htri_loss=htri_losses,cent_loss=centor_losses))
         
         end = time.time()
 
