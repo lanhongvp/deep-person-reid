@@ -38,7 +38,7 @@ parser.add_argument('--root', type=str, default='data',
                     help="root path to data directory")
 parser.add_argument('-d', '--dataset', type=str, default='aicity_raw',
                     choices=data_manager.get_names())
-parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity666_vp',
+parser.add_argument('-d_m', '--dataset_m', type=str, default='aicity_veri',
                     choices=data_manager.get_names())
 parser.add_argument('-j', '--workers', default=4, type=int,
                     help="number of data loading workers (default: 4)")
@@ -114,7 +114,11 @@ parser.add_argument('--exp',type=str,default='exp0',help='aicity txt result name
 parser.add_argument('--reranking',action= 'store_true', help= 'result re_ranking')
 parser.add_argument('--use_track_info',action='store_true',help='whether to use track info')
 parser.add_argument('--test_distance',type = str, default='global', help= 'test distance type')
-
+# Trick setting and bnneck
+parser.add_argument('--test_neck_feat',type = str, default='after')
+parser.add_argument('--model_pretrain_choice', type=str,default='self')
+parser.add_argument('--model_last_stride', type=int,default=2)
+parser.add_argument('--model_neck', type=str,default='bnneck')
 args = parser.parse_args()
 
 
@@ -183,7 +187,9 @@ def main():
     )
 
     print("Initializing model: {}".format(args.arch))
-    model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,loss={'xent', 'htri'})
+    # model = models.init_model(name=args.arch, num_classes_vid=dataset_m.num_train_vids, num_classes_vpid=dataset_m.num_train_vpids,loss={'xent', 'htri'})
+    model = build_model(args,dataset_m.num_train_vids)
+    
     print("Model size: {:.3f} M".format(count_num_param(model)))
 
     if args.label_smooth:
