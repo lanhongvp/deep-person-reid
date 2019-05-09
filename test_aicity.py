@@ -19,6 +19,7 @@ from torchreid import data_manager
 from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
 from torchreid import transforms as T
 from torchreid import models
+from torchreid.modeling import build_model
 from torchreid.losses import CrossEntropyLabelSmooth, TripletLoss, DeepSupervision
 from torchreid.utils.iotools import save_checkpoint, check_isfile
 from torchreid.utils.avgmeter import AverageMeter
@@ -87,7 +88,7 @@ parser.add_argument('--lambda-htri', type=float, default=1,
 parser.add_argument('--label-smooth', action='store_true',
                     help="use label smoothing regularizer in cross entropy loss")
 # Architecture
-parser.add_argument('-a', '--arch', type=str, default='resnet50', choices=models.get_names())
+parser.add_argument('-a', '--arch', type=str, default='resnet50')
 # Miscs
 parser.add_argument('--print-freq', type=int, default=10,
                     help="print frequency")

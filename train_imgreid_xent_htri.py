@@ -17,7 +17,7 @@ from torch.optim import lr_scheduler
 
 from torchreid.modeling import build_model
 from torchreid import data_manager
-from torchreid.dataset_loader import ImageDataset,ImageDatasetNoCid,ImageDatasetNoCidVid
+from torchreid.dataset_loader import ImageDataset
 from torchreid import transforms as T
 from torchreid.transforms import RandomErasing
 from torchreid import models
@@ -108,7 +108,7 @@ parser.add_argument('--print-freq', type=int, default=10,
 parser.add_argument('--seed', type=int, default=1,
                     help="manual seed")
 parser.add_argument('--resume', type=str, default='/home/lzhpc/.torch/models/', metavar='PATH')
-parser.add_argument('--load-weights', type=str, default='',
+parser.add_argument('--load-weights', type=str, default='/home/lzhpc/.torch/models/',
                     help="load pretrained weights but ignores layers that don't match in size")
 parser.add_argument('--evaluate', action='store_true',
                     help="evaluation only")
@@ -164,7 +164,7 @@ def main():
     print("Dataset merge {}".format(dataset_m))
     transform_train = T.Compose([
         T.Random2DTranslation(args.height, args.width),
-        #RandomErasing(),
+        # RandomErasing(),
         T.RandomHorizontalFlip(),
         T.ToTensor(),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),

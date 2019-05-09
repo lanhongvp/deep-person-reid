@@ -6,7 +6,7 @@ from torchvision.transforms import *
 from PIL import Image
 import random
 import numpy as np
-
+from IPython import embed
 
 class Random2DTranslation(object):
     """
@@ -66,6 +66,7 @@ class RandomErasing(object):
             return img
 
         for attempt in range(100):
+            embed()
             area = img.size()[1] * img.size()[2]
 
             target_area = random.uniform(self.sl, self.sh) * area

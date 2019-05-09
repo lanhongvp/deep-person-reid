@@ -205,7 +205,10 @@ def _write2txt(aicity_results,exp):
             idx_row = aicity_results.iloc[idx]['gallery_ids'][:100]
             # embed()
             for item in idx_row:
-                row_rank = str(item)
+                if isinstance(item,tuple):
+                    row_rank = str(item[0])
+                else:
+                    row_rank = str(item)
                 row_ranks.append(row_rank)
             sep_c = sep_c.join(row_ranks)
             # embed()

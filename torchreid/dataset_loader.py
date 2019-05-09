@@ -10,7 +10,7 @@ import io
 
 import torch
 from torch.utils.data import Dataset
-
+from IPython import embed
 
 def read_image(img_path):
     """Keep reading image until succeed.
@@ -60,6 +60,7 @@ class ImageDataset(Dataset):
         img = read_image(img_path)
         
         if self.transform is not None:
+            embed()
             img = self.transform(img)
         
         return img, vid, camid
