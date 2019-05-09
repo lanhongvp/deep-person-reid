@@ -107,7 +107,7 @@ parser.add_argument('--print-freq', type=int, default=10,
                     help="print frequency")
 parser.add_argument('--seed', type=int, default=1,
                     help="manual seed")
-parser.add_argument('--resume', type=str, default='/home/lzhpc/.torch/models/', metavar='PATH')
+parser.add_argument('--resume', type=str, default='', metavar='PATH')
 parser.add_argument('--load-weights', type=str, default='/home/lzhpc/.torch/models/',
                     help="load pretrained weights but ignores layers that don't match in size")
 parser.add_argument('--evaluate', action='store_true',

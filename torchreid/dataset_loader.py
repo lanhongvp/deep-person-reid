@@ -60,7 +60,7 @@ class ImageDataset(Dataset):
         img = read_image(img_path)
         
         if self.transform is not None:
-            embed()
+            # embed()
             img = self.transform(img)
         
         return img, vid, camid
