@@ -252,7 +252,7 @@ def main():
 
     for epoch in range(args.start_epoch, args.max_epoch):
         start_train_time = time.time()
-        train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, use_gpu)
+        train(epoch, model, criterion_xent, criterion_htri, criterion_centor, optimizer, trainloader, use_gpu)
         train_time += round(time.time() - start_train_time)
         
         scheduler.step()
@@ -285,7 +285,7 @@ def main():
     print("Finished. Total elapsed time (h:m:s): {}. Training time (h:m:s): {}.".format(elapsed, train_time))
 
 
-def train(epoch, model, criterion_xent, criterion_htri, optimizer, trainloader, use_gpu):
+def train(epoch, model, criterion_xent, criterion_htri, criterion_centor, optimizer, trainloader, use_gpu):
     losses = AverageMeter()
     batch_time = AverageMeter()
     data_time = AverageMeter()
