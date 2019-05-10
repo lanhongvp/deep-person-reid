@@ -361,9 +361,9 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
     print("==> BatchTime(s)/BatchSize(img): {:.3f}/{}".format(batch_time.avg, args.test_batch))
 
     m, n = qf_aug.size(0), gf_aug.size(0)
-    distmat = torch.pow(qf, 2).sum(dim=1, keepdim=True).expand(m, n) + \
-              torch.pow(gf, 2).sum(dim=1, keepdim=True).expand(n, m).t()
-    distmat.addmm_(1, -2, qf, gf.t())
+    distmat = torch.pow(qf_aug_all, 2).sum(dim=1, keepdim=True).expand(m, n) + \
+              torch.pow(gf_aug_all, 2).sum(dim=1, keepdim=True).expand(n, m).t()
+    distmat.addmm_(1, -2, qf_aug_all, gf_aug_all.t())
     distmat = distmat.numpy()
 
     print("------------------------")
@@ -372,7 +372,7 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         from torchreid.utils.re_ranking import re_ranking
         if args.test_distance == 'global':
             print("Only using global branch for reranking")
-            distmat = re_ranking(qf,gt_f,k1=20, k2=6, lambda_value=0.3)
+            distmat = re_ranking(qf_aug_all,gt_f,k1=20, k2=6, lambda_value=0.3)
     
     print("Computing CMC and mAP after reranking")
     if args.use_track_info:
