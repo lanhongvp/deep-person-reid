@@ -372,8 +372,11 @@ def test(model, queryloader, galleryloader, use_gpu, ranks=[1, 5, 10, 20],datase
         from torchreid.utils.re_ranking import re_ranking
         if args.test_distance == 'global':
             print("Only using global branch for reranking")
-            distmat = re_ranking(qf_aug_all,gt_f,k1=20, k2=6, lambda_value=0.3)
-    
+            if args.use_track_info:
+                distmat = re_ranking(qf_aug_all,gt_f,k1=20, k2=6, lambda_value=0.3)
+            else:
+                distmat = re_ranking(qf_aug_all,gf_aug_all,k1=20, k2=6, lambda_value=0.3)
+                
     print("Computing CMC and mAP after reranking")
     if args.use_track_info:
         eval_aicity_track(distmat,q_imgs,g_imgs,track_id,
